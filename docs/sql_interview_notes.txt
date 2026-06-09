@@ -1,0 +1,8 @@
+SQL Interview Notes
+
+SQL is used by data engineers to query, transform, and validate data.
+Common interview topics include joins, group by, window functions, CTEs,
+indexes, and query performance.
+
+A window function performs a calculation across rows related to the current row.
+Examples include ROW_NUMBER, RANK, DENSE_RANK, LEAD, LAG, and SUM over a partition.

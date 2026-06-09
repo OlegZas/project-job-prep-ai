@@ -1,0 +1,7 @@
+GCP and BigQuery Interview Notes
+
+BigQuery is a serverless data warehouse on Google Cloud.
+Data engineers use it for analytics, reporting, and large SQL workloads.
+
+Partitioning helps reduce scanned data by dividing tables by date or another field.
+Clustering sorts data by selected columns to improve query performance.
