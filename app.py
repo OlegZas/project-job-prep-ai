@@ -1,5 +1,11 @@
+import os
 import streamlit as st
+from dotenv import load_dotenv
 from src.file_loader import DocumentProcessor
+from src.document_store import DocumentStore
+from src.rag_pipeline import RAGPipeline
+
+load_dotenv()
 
 st.set_page_config(
     page_title="DataPrep AI",
@@ -78,27 +84,34 @@ with tab1:
     )
 
     if st.button("Ask Document Question"):
-        if not uploaded_files:
+        if not os.getenv("OPENAI_API_KEY"):
+            st.error("Missing OpenAI API key. Add OPENAI_API_KEY to your .env file.")
+        elif not uploaded_files:
             st.warning("Please upload at least one document first.")
         elif not chunks:
             st.warning("The uploaded documents did not create any text chunks.")
         elif not doc_question.strip():
             st.warning("Please enter a question.")
         else:
-            st.write("### Question")
-            st.write(doc_question)
+            with st.spinner("Creating embeddings and searching your documents..."):
+                store = DocumentStore()
+                store.add_chunks(chunks)
+                results = store.search(doc_question, top_k=3)
 
-            st.write("### Demo Retrieval Result")
-            st.write(
-                """
-                The app has successfully loaded and chunked your documents.
-                In the next step, we will add embeddings and similarity search so the app
-                can find the most relevant chunks for your question.
-                """
-            )
+            st.write("### Retrieved References")
 
-            st.write("### First Available Chunk")
-            st.write(chunks[0]["text"][:700])
+            for result in results:
+                with st.expander(
+                    f"{result['file_name']} | Chunk {result['chunk_number']} | Score: {result['score']:.3f}"
+                ):
+                    st.write(result["text"])
+
+            with st.spinner("Generating answer..."):
+                rag = RAGPipeline()
+                answer = rag.answer_question(doc_question, results)
+
+            st.write("### Answer")
+            st.write(answer)
 
 
 with tab2:
