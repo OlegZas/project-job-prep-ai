@@ -1,9 +1,12 @@
 import os
+
 import streamlit as st
 from dotenv import load_dotenv
+
 from src.file_loader import DocumentProcessor
 from src.document_store import DocumentStore
 from src.rag_pipeline import RAGPipeline
+from src.web_search import WebSearchAssistant
 
 load_dotenv()
 
@@ -19,7 +22,7 @@ st.subheader("Data Engineering Interview Prep Assistant")
 st.write(
     """
     DataPrep AI helps data engineering candidates prepare for interviews using two modes:
-    
+
     **Mode 1:** Search uploaded interview documents, resumes, job descriptions, and study notes.  
     **Mode 2:** Ask live market knowledge questions about data engineering tools, trends, and skills.
     """
@@ -36,9 +39,14 @@ with tab1:
     st.write(
         """
         Upload your resume, job description, interview notes, SQL notes, Kafka notes,
-        or cloud study guides. This mode will prepare your documents for RAG by
-        reading, cleaning, and splitting them into searchable chunks.
+        or cloud study guides. This mode prepares documents for RAG by reading,
+        cleaning, and splitting them into searchable chunks.
         """
+    )
+
+    use_sample_docs = st.checkbox(
+        "Use sample interview notes from docs folder",
+        value=True
     )
 
     uploaded_files = st.file_uploader(
@@ -47,20 +55,27 @@ with tab1:
         accept_multiple_files=True
     )
 
+    processor = DocumentProcessor(chunk_size=180, overlap=30)
+
+    sample_files = []
+    if use_sample_docs:
+        sample_files = processor.load_local_files("docs")
+
+    all_files = sample_files + list(uploaded_files or [])
+
     chunks = []
 
-    if uploaded_files:
-        st.success(f"{len(uploaded_files)} file(s) uploaded.")
+    if all_files:
+        st.success(f"{len(all_files)} file(s) ready for processing.")
 
-        st.write("Uploaded files:")
-        for file in uploaded_files:
+        st.write("Files being used:")
+        for file in all_files:
             st.write(f"- {file.name}")
 
-        processor = DocumentProcessor(chunk_size=180, overlap=30)
-        chunks = processor.process_files(uploaded_files)
+        chunks = processor.process_files(all_files)
 
         st.write("### Document Processing Results")
-        st.write(f"Total files uploaded: {len(uploaded_files)}")
+        st.write(f"Total files: {len(all_files)}")
         st.write(f"Total text chunks created: {len(chunks)}")
 
         if chunks:
@@ -71,10 +86,10 @@ with tab1:
                     st.write(chunk["text"][:500] + "...")
                     st.divider()
         else:
-            st.warning("No readable text was found in the uploaded files.")
+            st.warning("No readable text was found in the documents.")
 
     else:
-        st.info("No files uploaded yet.")
+        st.info("No files loaded yet. Upload files or use the sample docs.")
 
     st.subheader("Ask a question about your documents")
 
@@ -86,32 +101,37 @@ with tab1:
     if st.button("Ask Document Question"):
         if not os.getenv("OPENAI_API_KEY"):
             st.error("Missing OpenAI API key. Add OPENAI_API_KEY to your .env file.")
-        elif not uploaded_files:
-            st.warning("Please upload at least one document first.")
+        elif not all_files:
+            st.warning("Please upload documents or use the sample docs.")
         elif not chunks:
-            st.warning("The uploaded documents did not create any text chunks.")
+            st.warning("The documents did not create any text chunks.")
         elif not doc_question.strip():
             st.warning("Please enter a question.")
         else:
-            with st.spinner("Creating embeddings and searching your documents..."):
-                store = DocumentStore()
-                store.add_chunks(chunks)
-                results = store.search(doc_question, top_k=3)
+            try:
+                with st.spinner("Creating embeddings and searching your documents..."):
+                    store = DocumentStore()
+                    store.add_chunks(chunks)
+                    results = store.search(doc_question, top_k=3)
 
-            st.write("### Retrieved References")
+                st.write("### Retrieved References")
 
-            for result in results:
-                with st.expander(
-                    f"{result['file_name']} | Chunk {result['chunk_number']} | Score: {result['score']:.3f}"
-                ):
-                    st.write(result["text"])
+                for result in results:
+                    with st.expander(
+                        f"{result['file_name']} | Chunk {result['chunk_number']} | Score: {result['score']:.3f}"
+                    ):
+                        st.write(result["text"])
 
-            with st.spinner("Generating answer..."):
-                rag = RAGPipeline()
-                answer = rag.answer_question(doc_question, results)
+                with st.spinner("Generating answer from your documents..."):
+                    rag = RAGPipeline()
+                    answer = rag.answer_question(doc_question, results)
 
-            st.write("### Answer")
-            st.write(answer)
+                st.write("### Answer")
+                st.write(answer)
+
+            except Exception as error:
+                st.error("Something went wrong while generating the document answer.")
+                st.write(error)
 
 
 with tab2:
@@ -120,8 +140,18 @@ with tab2:
     st.write(
         """
         Use this mode for current or general data engineering questions.
-        Later, this mode can connect to a web search API or live data source
-        before sending the question to the LLM.
+        This mode uses web search through the OpenAI API to answer questions about
+        current tools, skills, trends, and interview expectations.
+        """
+    )
+
+    st.info(
+        """
+        Good questions for this mode:
+        - What are the latest Kafka improvements?
+        - What skills are companies asking from data engineers?
+        - What should I know about modern ETL tools?
+        - What cloud skills are useful for data engineering interviews?
         """
     )
 
@@ -131,20 +161,23 @@ with tab2:
     )
 
     if st.button("Ask Market Question"):
-        if not market_question.strip():
+        if not os.getenv("OPENAI_API_KEY"):
+            st.error("Missing OpenAI API key. Add OPENAI_API_KEY to your .env file.")
+        elif not market_question.strip():
             st.warning("Please enter a question.")
         else:
-            st.write("### Question")
-            st.write(market_question)
+            try:
+                with st.spinner("Searching the web and generating answer..."):
+                    web_assistant = WebSearchAssistant()
+                    market_answer = web_assistant.answer_market_question(market_question)
 
-            st.write("### Demo Answer")
-            st.write(
-                """
-                This is a placeholder answer. In the final version, this mode will search
-                live or recent sources and return an answer about current data engineering
-                tools, trends, and interview expectations.
-                """
-            )
+                st.write("### Answer")
+                st.write(market_answer)
+
+            except Exception as error:
+                st.error("Something went wrong while generating the market knowledge answer.")
+                st.write(error)
+
 
 st.divider()
 
