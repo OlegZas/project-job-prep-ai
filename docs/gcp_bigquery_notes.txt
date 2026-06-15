@@ -1,7 +1,323 @@
 GCP and BigQuery Interview Notes
+DataPrep AI Sample Document
 
-BigQuery is a serverless data warehouse on Google Cloud.
-Data engineers use it for analytics, reporting, and large SQL workloads.
+Purpose:
+These notes are for data engineering interview preparation. They summarize common Google Cloud Platform (GCP), BigQuery, IAM, storage, and data pipeline questions in simple words.
 
-Partitioning helps reduce scanned data by dividing tables by date or another field.
-Clustering sorts data by selected columns to improve query performance.
+Source note:
+This file was created as a summarized study guide from common GCP interview topics. The wording is simplified and rewritten for this project.
+
+------------------------------------------------------------
+1. What is Google Cloud Platform?
+------------------------------------------------------------
+Google Cloud Platform, also called GCP, is a cloud platform from Google. It gives users services for computing, storage, databases, networking, machine learning, and analytics. Data engineers often use GCP to build data pipelines, store data, and run analytics.
+
+Interview answer:
+GCP is a collection of cloud services that lets companies run applications, store data, process data, and analyze data without managing all of the physical hardware themselves.
+
+------------------------------------------------------------
+2. What is cloud computing?
+------------------------------------------------------------
+Cloud computing means using servers, storage, databases, networking, and software over the internet instead of owning and managing physical machines directly.
+
+Interview answer:
+Cloud computing helps companies scale faster, reduce infrastructure work, and pay for resources based on usage.
+
+------------------------------------------------------------
+3. What is the difference between IaaS, PaaS, and SaaS?
+------------------------------------------------------------
+IaaS means Infrastructure as a Service. It gives virtual machines, networks, and storage. Compute Engine is an example.
+
+PaaS means Platform as a Service. It gives a platform to deploy applications without managing most infrastructure. App Engine is an example.
+
+SaaS means Software as a Service. It is a complete application used over the internet, like Gmail or Google Workspace.
+
+------------------------------------------------------------
+4. What are common GCP services?
+------------------------------------------------------------
+Common GCP services include Compute Engine, App Engine, Google Kubernetes Engine, Cloud Storage, Cloud SQL, BigQuery, Pub/Sub, Dataflow, Cloud Functions, Cloud Run, and IAM.
+
+For data engineering, the most important services are usually BigQuery, Cloud Storage, Pub/Sub, Dataflow, Cloud Composer, and IAM.
+
+------------------------------------------------------------
+5. What is Google Compute Engine?
+------------------------------------------------------------
+Compute Engine is GCP's virtual machine service. It lets users create and manage virtual machines in the cloud.
+
+Interview answer:
+Compute Engine is useful when you need control over the operating system, machine size, installed software, networking, and runtime environment.
+
+------------------------------------------------------------
+6. What is App Engine?
+------------------------------------------------------------
+App Engine is a platform service for deploying applications without managing servers. It is easier to use than Compute Engine but gives less control over the infrastructure.
+
+Interview answer:
+Use App Engine when you want to focus on application code instead of managing virtual machines.
+
+------------------------------------------------------------
+7. What is Cloud Run?
+------------------------------------------------------------
+Cloud Run is a serverless platform for running containers. It automatically scales and is useful for APIs, web apps, and microservices.
+
+Interview answer:
+Cloud Run is a good choice when you want to deploy a containerized application without managing servers or Kubernetes clusters.
+
+------------------------------------------------------------
+8. What is Google Kubernetes Engine?
+------------------------------------------------------------
+Google Kubernetes Engine, or GKE, is GCP's managed Kubernetes service. It is used to run containerized applications at scale.
+
+Interview answer:
+GKE is useful for more complex container workloads where teams need Kubernetes features like pods, services, deployments, autoscaling, and rolling updates.
+
+------------------------------------------------------------
+9. What is Cloud Storage?
+------------------------------------------------------------
+Cloud Storage is object storage on GCP. It stores files such as CSVs, JSON files, images, logs, backups, and data lake files.
+
+Interview answer:
+Data engineers often use Cloud Storage as a landing zone or raw data lake before loading data into BigQuery.
+
+------------------------------------------------------------
+10. What is a bucket in Cloud Storage?
+------------------------------------------------------------
+A bucket is a container for objects in Cloud Storage. Files are stored inside buckets.
+
+Interview answer:
+Buckets are used to organize and store objects. Bucket names are globally unique, and permissions can be controlled using IAM.
+
+------------------------------------------------------------
+11. What is IAM?
+------------------------------------------------------------
+IAM means Identity and Access Management. It controls who can access cloud resources and what actions they can perform.
+
+Interview answer:
+IAM uses roles and permissions. A role is a group of permissions. Users, groups, and service accounts can be granted roles.
+
+------------------------------------------------------------
+12. What is a service account?
+------------------------------------------------------------
+A service account is an identity used by an application, VM, pipeline, or service instead of a human user.
+
+Interview answer:
+Service accounts are important for automation. For example, a Dataflow job can use a service account to read from Pub/Sub and write to BigQuery.
+
+------------------------------------------------------------
+13. What is the principle of least privilege?
+------------------------------------------------------------
+The principle of least privilege means giving users or services only the permissions they need and nothing extra.
+
+Interview answer:
+This improves security because it limits damage if an account or service is misused.
+
+------------------------------------------------------------
+14. What is BigQuery?
+------------------------------------------------------------
+BigQuery is a serverless data warehouse on Google Cloud. It is used to store and query large amounts of data using SQL.
+
+Interview answer:
+BigQuery is commonly used for analytics, reporting, dashboards, ELT workloads, and large-scale data analysis.
+
+------------------------------------------------------------
+15. Why is BigQuery useful for data engineers?
+------------------------------------------------------------
+BigQuery is useful because it is serverless, scalable, and works well with SQL. Data engineers do not need to manage servers or manually provision database hardware.
+
+Interview answer:
+BigQuery can handle large datasets and supports batch loading, streaming inserts, partitioning, clustering, and integration with other GCP services.
+
+------------------------------------------------------------
+16. What is a BigQuery dataset?
+------------------------------------------------------------
+A dataset is a container for BigQuery tables, views, and other BigQuery resources.
+
+Interview answer:
+Datasets help organize tables by project, business area, environment, or application.
+
+------------------------------------------------------------
+17. What is a BigQuery table?
+------------------------------------------------------------
+A BigQuery table stores structured data in rows and columns.
+
+Interview answer:
+Tables are queried using SQL. They can be regular tables, partitioned tables, clustered tables, external tables, or views.
+
+------------------------------------------------------------
+18. What is a partitioned table in BigQuery?
+------------------------------------------------------------
+A partitioned table is divided into smaller parts called partitions. Partitions are often based on a date or timestamp column.
+
+Interview answer:
+Partitioning helps reduce the amount of data scanned by a query. This can improve performance and lower cost.
+
+Example:
+If a table is partitioned by order_date, a query filtering on one month only scans that month instead of the entire table.
+
+------------------------------------------------------------
+19. What is clustering in BigQuery?
+------------------------------------------------------------
+Clustering organizes table data based on selected columns. Common cluster columns include customer_id, region, user_id, or product_id.
+
+Interview answer:
+Clustering can improve query performance when queries often filter or group by the clustered columns.
+
+------------------------------------------------------------
+20. Difference between partitioning and clustering
+------------------------------------------------------------
+Partitioning divides data into larger segments, often by date.
+
+Clustering sorts or organizes data within a table or partition based on selected columns.
+
+Interview answer:
+Use partitioning to limit data by date or range. Use clustering to improve performance for common filter or group by columns.
+
+------------------------------------------------------------
+21. How do you reduce BigQuery query cost?
+------------------------------------------------------------
+Ways to reduce cost:
+- Select only needed columns
+- Use partition filters
+- Use clustered tables
+- Avoid SELECT *
+- Preview data before querying
+- Use LIMIT carefully because LIMIT does not always reduce bytes scanned
+- Store data in efficient formats when using external tables
+
+Interview answer:
+In BigQuery, cost is often based on data scanned. Query design and table design both matter.
+
+------------------------------------------------------------
+22. What is Pub/Sub?
+------------------------------------------------------------
+Pub/Sub is a messaging service used for event-driven systems and streaming data pipelines.
+
+Interview answer:
+Applications publish messages to topics, and subscribers read messages from subscriptions. Pub/Sub helps decouple producers from consumers.
+
+------------------------------------------------------------
+23. What is Dataflow?
+------------------------------------------------------------
+Dataflow is GCP's managed service for running Apache Beam pipelines. It supports batch and streaming data processing.
+
+Interview answer:
+A common pattern is Pub/Sub to Dataflow to BigQuery. Pub/Sub receives streaming events, Dataflow transforms the data, and BigQuery stores it for analytics.
+
+------------------------------------------------------------
+24. What is Cloud Composer?
+------------------------------------------------------------
+Cloud Composer is Google Cloud's managed Apache Airflow service.
+
+Interview answer:
+Data engineers use Composer to schedule and orchestrate pipelines, such as loading data from Cloud Storage into BigQuery or running SQL transformations.
+
+------------------------------------------------------------
+25. What is the difference between batch and streaming pipelines?
+------------------------------------------------------------
+Batch pipelines process data in groups at scheduled times. Streaming pipelines process data continuously as events arrive.
+
+Interview answer:
+Batch is useful for daily reports or scheduled loads. Streaming is useful when the business needs near real-time data.
+
+------------------------------------------------------------
+26. What is ELT?
+------------------------------------------------------------
+ELT means Extract, Load, Transform. Data is extracted from a source, loaded into a data warehouse, and transformed inside the warehouse.
+
+Interview answer:
+BigQuery is often used for ELT because it can run large SQL transformations after raw data has been loaded.
+
+------------------------------------------------------------
+27. What is ETL?
+------------------------------------------------------------
+ETL means Extract, Transform, Load. Data is transformed before it is loaded into the final target system.
+
+Interview answer:
+ETL is useful when data needs to be cleaned, validated, or reshaped before storage.
+
+------------------------------------------------------------
+28. What is a common GCP data engineering architecture?
+------------------------------------------------------------
+A common architecture is:
+
+Source system
+↓
+Cloud Storage or Pub/Sub
+↓
+Dataflow or batch processing
+↓
+BigQuery
+↓
+Looker, dashboard, or analytics user
+
+Interview answer:
+This architecture supports both batch and streaming analytics.
+
+------------------------------------------------------------
+29. What are Google Cloud APIs?
+------------------------------------------------------------
+Google Cloud APIs let applications interact with GCP services programmatically.
+
+Interview answer:
+Developers can use APIs through client libraries, REST calls, the gcloud CLI, or the Google Cloud console.
+
+------------------------------------------------------------
+30. What is Google Cloud SDK?
+------------------------------------------------------------
+Google Cloud SDK is a set of command-line tools for working with Google Cloud.
+
+Important tools:
+- gcloud for managing GCP resources
+- gsutil for Cloud Storage
+- bq for BigQuery
+
+Interview answer:
+The SDK is useful for automation, deployment, scripting, and managing resources from the command line.
+
+------------------------------------------------------------
+31. What is a GCP project?
+------------------------------------------------------------
+A project is a container for GCP resources. It contains resources, IAM policies, billing settings, APIs, and service accounts.
+
+Interview answer:
+Projects help organize cloud resources by application, team, environment, or billing area.
+
+------------------------------------------------------------
+32. What is a quota in GCP?
+------------------------------------------------------------
+A quota is a limit on how much of a resource a project can use.
+
+Interview answer:
+Quotas protect systems from unexpected usage and help control cost. If more capacity is needed, users can request a quota increase.
+
+------------------------------------------------------------
+33. What happens if a Compute Engine instance is deleted?
+------------------------------------------------------------
+If a VM instance is deleted, it usually cannot be recovered as the same instance. If it is only stopped, it can be started again.
+
+Interview answer:
+Stopping and deleting are different. Stopped resources may still exist. Deleted resources are removed.
+
+------------------------------------------------------------
+34. How does GCP support real-time data processing?
+------------------------------------------------------------
+GCP supports real-time data with services like Pub/Sub, Dataflow, and BigQuery.
+
+Interview answer:
+Pub/Sub receives events, Dataflow processes them, and BigQuery stores them for analysis. This is a common real-time analytics pattern.
+
+------------------------------------------------------------
+35. How should I answer a GCP interview question?
+------------------------------------------------------------
+A good answer should include:
+- A simple definition
+- When the service is used
+- A practical example
+- A data engineering use case if possible
+
+Example:
+BigQuery is a serverless data warehouse. I would use it to store and analyze large datasets with SQL. In a data pipeline, I might load raw files from Cloud Storage into BigQuery, then transform them into reporting tables.
+
+------------------------------------------------------------
+End of Notes
+------------------------------------------------------------
