@@ -12,11 +12,10 @@ load_dotenv()
 
 st.set_page_config(
     page_title="DataPrep AI",
-    page_icon="📊",
     layout="wide"
 )
 
-st.title("📊 DataPrep AI")
+st.title(" DataPrep AI")
 st.subheader("Data Engineering Interview Prep Assistant")
 
 st.write(
@@ -30,7 +29,7 @@ st.write(
 
 st.divider()
 
-tab1, tab2 = st.tabs(["📁 Interview Documents", "🌐 Live Market Knowledge"])
+tab1, tab2 = st.tabs(["Interview Documents", "Live Market Knowledge"])
 
 
 with tab1:
