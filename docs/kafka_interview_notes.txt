@@ -1,7 +1,11 @@
-GCP and BigQuery Interview Notes
+Kafka Interview Notes
 
-BigQuery is a serverless data warehouse on Google Cloud.
-Data engineers use it for analytics, reporting, and large SQL workloads.
+Apache Kafka is used for event streaming and real-time data pipelines.
+Producers write messages to topics. Consumers read messages from topics.
 
-Partitioning helps reduce scanned data by dividing tables by date or another field.
-Clustering sorts data by selected columns to improve query performance.
+A topic is split into partitions. Partitions allow Kafka to scale and process data in parallel.
+
+A consumer group lets multiple consumers share the work of reading topic partitions.
+Each partition is assigned to only one consumer within the same consumer group at a time.
+
+Kafka is often used for streaming ETL, event-driven systems, log processing, and real-time data movement.
