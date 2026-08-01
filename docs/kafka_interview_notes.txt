@@ -1,7 +1,452 @@
-GCP and BigQuery Interview Notes
+Kafka Interview Notes
+DataPrep AI Sample Document
 
-BigQuery is a serverless data warehouse on Google Cloud.
-Data engineers use it for analytics, reporting, and large SQL workloads.
+Purpose:
+These notes are for data engineering interview preparation. They summarize common Apache Kafka interview topics such as topics, partitions, producers, consumers, consumer groups, brokers, replicas, schemas, retention, log compaction, ordering, and reliability.
 
-Partitioning helps reduce scanned data by dividing tables by date or another field.
-Clustering sorts data by selected columns to improve query performance.
+Source note:
+This file was created as a simplified and rewritten study guide from common Kafka data engineering interview topics. The wording is paraphrased for this project.
+
+------------------------------------------------------------
+1. What is Apache Kafka?
+------------------------------------------------------------
+Apache Kafka is an open-source distributed event streaming platform. It is used to publish, store, process, and consume streams of data.
+
+Interview answer:
+Kafka is commonly used for real-time data pipelines, event-driven systems, log aggregation, activity tracking, and streaming analytics.
+
+------------------------------------------------------------
+2. Why is Kafka important for data engineering?
+------------------------------------------------------------
+Kafka helps move data between systems in real time. Data engineers use it when data needs to flow continuously instead of waiting for a batch job.
+
+Interview answer:
+Kafka is useful when a company needs scalable, low-latency data movement between applications, databases, analytics systems, and data warehouses.
+
+------------------------------------------------------------
+3. What is a Kafka topic?
+------------------------------------------------------------
+A topic is a named category where messages are stored.
+
+Interview answer:
+Producers write messages to topics, and consumers read messages from topics. For example, a company might have topics for transactions, customers, clicks, or orders.
+
+------------------------------------------------------------
+4. What is a Kafka partition?
+------------------------------------------------------------
+A partition is a smaller piece of a topic. A topic can have one or many partitions.
+
+Interview answer:
+Partitions allow Kafka to scale because multiple consumers can read from different partitions in parallel. Kafka keeps message order within a single partition.
+
+------------------------------------------------------------
+5. Why are partitions useful?
+------------------------------------------------------------
+Partitions help with parallel processing and higher throughput.
+
+Interview answer:
+If a topic has multiple partitions, Kafka can spread the work across brokers and consumers. This helps process more messages at the same time.
+
+------------------------------------------------------------
+6. What is an offset?
+------------------------------------------------------------
+An offset is a number that identifies the position of a message inside a partition.
+
+Interview answer:
+Consumers track offsets so they know which messages they have already read and where to continue.
+
+------------------------------------------------------------
+7. What is a Kafka producer?
+------------------------------------------------------------
+A producer is an application that sends records to Kafka topics.
+
+Interview answer:
+A producer can choose which topic to write to and may use a message key to decide which partition receives the message.
+
+------------------------------------------------------------
+8. What is a Kafka consumer?
+------------------------------------------------------------
+A consumer is an application that reads records from Kafka topics.
+
+Interview answer:
+Consumers poll Kafka for new messages, process the messages, and track their progress with offsets.
+
+------------------------------------------------------------
+9. What is a consumer group?
+------------------------------------------------------------
+A consumer group is a group of consumers that share the work of reading from a topic.
+
+Interview answer:
+Each partition is assigned to only one consumer in the same consumer group at a time. This allows parallel processing while avoiding duplicate processing inside the same group.
+
+------------------------------------------------------------
+10. What happens if there are more consumers than partitions?
+------------------------------------------------------------
+If there are more consumers than partitions in one consumer group, some consumers will be idle.
+
+Interview answer:
+The maximum useful parallelism for one consumer group is usually limited by the number of partitions.
+
+------------------------------------------------------------
+11. What happens if a consumer fails?
+------------------------------------------------------------
+If a consumer fails, Kafka reassigns its partitions to other consumers in the same group.
+
+Interview answer:
+This process is called rebalancing. It helps the application continue processing messages even when a consumer goes down.
+
+------------------------------------------------------------
+12. What is consumer group rebalancing?
+------------------------------------------------------------
+Rebalancing is when Kafka redistributes partitions across consumers in a consumer group.
+
+Interview answer:
+Rebalancing happens when consumers join or leave a group, or when topic partitions change. It can temporarily slow processing, so it should be managed carefully.
+
+------------------------------------------------------------
+13. What is a Kafka broker?
+------------------------------------------------------------
+A broker is a Kafka server. A Kafka cluster is made up of one or more brokers.
+
+Interview answer:
+Brokers receive data from producers, store messages, and serve data to consumers.
+
+------------------------------------------------------------
+14. What is a Kafka cluster?
+------------------------------------------------------------
+A Kafka cluster is a group of Kafka brokers working together.
+
+Interview answer:
+A cluster improves scalability and fault tolerance by spreading topics and partitions across multiple brokers.
+
+------------------------------------------------------------
+15. What is replication in Kafka?
+------------------------------------------------------------
+Replication means Kafka keeps copies of partition data on multiple brokers.
+
+Interview answer:
+Replication improves fault tolerance. If one broker fails, another broker with a replica can take over.
+
+------------------------------------------------------------
+16. What is the difference between partitions and replicas?
+------------------------------------------------------------
+Partitions split a topic into multiple pieces for scalability and parallelism.
+
+Replicas are copies of partitions used for fault tolerance.
+
+Interview answer:
+Partitions help Kafka scale. Replicas help Kafka stay available when a broker fails.
+
+------------------------------------------------------------
+17. What is a leader replica?
+------------------------------------------------------------
+The leader replica handles reads and writes for a partition.
+
+Interview answer:
+Producers and consumers usually communicate with the leader replica. If the leader fails, a follower replica can be elected as the new leader.
+
+------------------------------------------------------------
+18. What is a follower replica?
+------------------------------------------------------------
+A follower replica copies data from the leader replica.
+
+Interview answer:
+Follower replicas help provide fault tolerance. They stay synchronized so one can take over if the leader fails.
+
+------------------------------------------------------------
+19. What are ISR and AR in Kafka?
+------------------------------------------------------------
+ISR means in-sync replicas. These replicas are caught up with the leader.
+
+AR means assigned replicas. This includes all replicas assigned to a partition.
+
+Interview answer:
+ISR is important for reliability because these replicas have the latest data and can safely take over if needed.
+
+------------------------------------------------------------
+20. What is log retention?
+------------------------------------------------------------
+Log retention controls how long Kafka keeps messages.
+
+Interview answer:
+Kafka can keep messages for a set amount of time or until a size limit is reached. This allows consumers to replay data if needed.
+
+------------------------------------------------------------
+21. What is log compaction?
+------------------------------------------------------------
+Log compaction keeps the latest value for each message key and removes older values for the same key.
+
+Interview answer:
+Log compaction is useful when Kafka stores the latest state of an entity, such as the current value for a customer profile or account setting.
+
+------------------------------------------------------------
+22. How does Kafka support message replay?
+------------------------------------------------------------
+Kafka stores messages for a configured retention period. Consumers can reset offsets and read old messages again.
+
+Interview answer:
+Message replay is useful for recovery, reprocessing, debugging, and rebuilding downstream systems.
+
+------------------------------------------------------------
+23. How does Kafka prevent message loss?
+------------------------------------------------------------
+Kafka can reduce message loss by using producer acknowledgments, replication, manual offset commits, and retries.
+
+Interview answer:
+Common settings include acks=all, replication.factor greater than 1, min.insync.replicas, and committing offsets only after processing succeeds.
+
+------------------------------------------------------------
+24. What is a producer acknowledgment?
+------------------------------------------------------------
+A producer acknowledgment tells the producer whether Kafka successfully received the message.
+
+Interview answer:
+Using acks=all gives stronger durability because the message must be acknowledged by all required in-sync replicas before it is considered successful.
+
+------------------------------------------------------------
+25. What is manual offset commit?
+------------------------------------------------------------
+Manual offset commit means the consumer decides when to save its progress.
+
+Interview answer:
+This is useful because the consumer can commit the offset only after the message has been processed successfully. That reduces the risk of losing unprocessed data.
+
+------------------------------------------------------------
+26. What are at-most-once, at-least-once, and exactly-once delivery?
+------------------------------------------------------------
+At-most-once means a message may be lost but should not be processed twice.
+
+At-least-once means a message should not be lost but may be processed more than once.
+
+Exactly-once means each message is processed once in supported Kafka workflows.
+
+Interview answer:
+Many data pipelines use at-least-once delivery and make downstream processing idempotent to handle possible duplicates.
+
+------------------------------------------------------------
+27. What does idempotent processing mean?
+------------------------------------------------------------
+Idempotent processing means running the same operation more than once produces the same final result.
+
+Interview answer:
+This matters in Kafka because retries or at-least-once delivery can cause duplicate messages. Idempotent writes help protect data quality.
+
+------------------------------------------------------------
+28. How does Kafka ensure message ordering?
+------------------------------------------------------------
+Kafka preserves message order within a single partition.
+
+Interview answer:
+If messages with the same key must stay ordered, send them with the same key so they go to the same partition.
+
+------------------------------------------------------------
+29. Can Kafka guarantee order across the whole topic?
+------------------------------------------------------------
+Not usually. Kafka guarantees order within a partition, not across all partitions in a topic.
+
+Interview answer:
+If global ordering is required, the topic may need one partition, but that reduces parallelism and throughput.
+
+------------------------------------------------------------
+30. What is a schema in Kafka?
+------------------------------------------------------------
+A schema defines the structure of message data.
+
+Interview answer:
+Schemas help producers and consumers agree on the format of data, such as field names and data types.
+
+------------------------------------------------------------
+31. Why is Schema Registry useful?
+------------------------------------------------------------
+Schema Registry stores and manages schemas for Kafka messages.
+
+Interview answer:
+It helps enforce compatibility so producers and consumers do not break when message formats change over time.
+
+------------------------------------------------------------
+32. What data formats are common with Kafka?
+------------------------------------------------------------
+Common Kafka data formats include JSON, Avro, Protobuf, and plain text.
+
+Interview answer:
+Avro and Protobuf are common in production because they support schemas and efficient serialization.
+
+------------------------------------------------------------
+33. What is Kafka Connect?
+------------------------------------------------------------
+Kafka Connect is a framework for moving data between Kafka and other systems.
+
+Interview answer:
+Kafka Connect can use connectors to move data from databases, files, cloud storage, search systems, and data warehouses.
+
+------------------------------------------------------------
+34. What is a source connector?
+------------------------------------------------------------
+A source connector moves data from an external system into Kafka.
+
+Interview answer:
+For example, a source connector can read database changes and publish them into a Kafka topic.
+
+------------------------------------------------------------
+35. What is a sink connector?
+------------------------------------------------------------
+A sink connector moves data from Kafka into an external system.
+
+Interview answer:
+For example, a sink connector can write Kafka messages into BigQuery, Snowflake, S3, or another storage system.
+
+------------------------------------------------------------
+36. What is Kafka Streams?
+------------------------------------------------------------
+Kafka Streams is a client library for processing data directly from Kafka topics.
+
+Interview answer:
+Kafka Streams can filter, transform, aggregate, join, and enrich streaming data in real time.
+
+------------------------------------------------------------
+37. What is the difference between Kafka and RabbitMQ?
+------------------------------------------------------------
+Kafka is designed for high-throughput event streaming and message replay.
+
+RabbitMQ is a traditional message broker focused on queues, routing, and task distribution.
+
+Interview answer:
+Use Kafka for scalable event streams and real-time pipelines. Use RabbitMQ for task queues and complex message routing between services.
+
+------------------------------------------------------------
+38. Why choose Kafka over other messaging systems?
+------------------------------------------------------------
+Kafka is a good choice when the system needs high throughput, scalability, durability, message replay, and real-time processing.
+
+Interview answer:
+Kafka works well for event sourcing, streaming analytics, log aggregation, and large-scale data pipelines.
+
+------------------------------------------------------------
+39. How does Kafka help microservices?
+------------------------------------------------------------
+Kafka lets microservices communicate through events instead of direct calls.
+
+Interview answer:
+This decouples services, supports asynchronous processing, and helps each service evolve independently.
+
+------------------------------------------------------------
+40. What is ZooKeeper in Kafka?
+------------------------------------------------------------
+ZooKeeper was traditionally used to manage Kafka cluster metadata and coordination.
+
+Interview answer:
+Older Kafka versions used ZooKeeper for broker coordination and controller election. Newer Kafka architecture is moving toward KRaft mode, which removes the dependency on ZooKeeper.
+
+------------------------------------------------------------
+41. What is KRaft?
+------------------------------------------------------------
+KRaft is Kafka's newer metadata management mode that replaces ZooKeeper.
+
+Interview answer:
+KRaft simplifies Kafka architecture by allowing Kafka itself to manage metadata and controller election.
+
+------------------------------------------------------------
+42. How can you reduce Kafka disk usage?
+------------------------------------------------------------
+Ways to reduce disk usage include:
+- Lower retention.ms
+- Lower retention.bytes
+- Use log compaction
+- Use compression
+- Delete unused topics
+- Reduce unnecessary partitions
+- Tune segment.bytes
+
+Interview answer:
+The best option depends on whether the business needs long-term replay, latest-state storage, or only short-term buffering.
+
+------------------------------------------------------------
+43. What is message compression in Kafka?
+------------------------------------------------------------
+Compression reduces the size of messages written to Kafka.
+
+Interview answer:
+Common compression options include gzip, snappy, lz4, and zstd. Compression can reduce storage and network usage but may add CPU overhead.
+
+------------------------------------------------------------
+44. What is zero-copy in Kafka?
+------------------------------------------------------------
+Zero-copy is an optimization that lets Kafka transfer data efficiently from disk to network without extra copying through application memory.
+
+Interview answer:
+Zero-copy helps Kafka achieve high throughput for large-scale streaming workloads.
+
+------------------------------------------------------------
+45. What is a dead letter queue?
+------------------------------------------------------------
+A dead letter queue stores messages that could not be processed successfully.
+
+Interview answer:
+Dead letter topics are useful for debugging bad records without stopping the whole pipeline.
+
+------------------------------------------------------------
+46. What is backpressure?
+------------------------------------------------------------
+Backpressure happens when consumers cannot keep up with the rate of incoming messages.
+
+Interview answer:
+Signs of backpressure include growing consumer lag and delayed processing. Fixes may include scaling consumers, increasing partitions, optimizing processing, or reducing producer rate.
+
+------------------------------------------------------------
+47. What is consumer lag?
+------------------------------------------------------------
+Consumer lag is the difference between the latest offset in a partition and the offset a consumer has processed.
+
+Interview answer:
+High consumer lag means the consumer is falling behind. It is an important metric for monitoring Kafka pipelines.
+
+------------------------------------------------------------
+48. How do you monitor Kafka?
+------------------------------------------------------------
+Kafka can be monitored using metrics for broker health, topic throughput, consumer lag, disk usage, under-replicated partitions, and request latency.
+
+Interview answer:
+Common tools include Prometheus, Grafana, Kafka Manager, Confluent Control Center, and cloud provider monitoring tools.
+
+------------------------------------------------------------
+49. What happens if you increase the number of partitions?
+------------------------------------------------------------
+Increasing partitions can improve parallelism and throughput, but it can also increase overhead.
+
+Interview answer:
+More partitions can mean more broker resources, more open files, more replication traffic, and longer consumer group rebalances.
+
+------------------------------------------------------------
+50. How would you design a Kafka pipeline for data engineering?
+------------------------------------------------------------
+A common Kafka data pipeline is:
+
+Source system
+↓
+Producer or source connector
+↓
+Kafka topic
+↓
+Consumer, Kafka Streams, or sink connector
+↓
+Data warehouse, data lake, or analytics system
+
+Interview answer:
+For example, an application can publish order events to Kafka, a stream processor can clean or enrich the events, and a sink connector can write the final data to BigQuery or Snowflake.
+
+------------------------------------------------------------
+51. What is a common Kafka interview answer structure?
+------------------------------------------------------------
+A strong answer should include:
+- A short definition
+- Why it matters
+- A simple example
+- Any trade-offs
+- A data engineering use case
+
+Example:
+A partition is a split of a Kafka topic. Partitions allow parallel reads and writes, which improves scalability. Kafka guarantees ordering inside a partition, so if order matters for a customer, messages should use the same customer ID as the key.
+
+------------------------------------------------------------
+End of Notes
+------------------------------------------------------------

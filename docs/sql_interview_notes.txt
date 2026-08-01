@@ -1,8 +1,531 @@
 SQL Interview Notes
+DataPrep AI Sample Document
 
-SQL is used by data engineers to query, transform, and validate data.
-Common interview topics include joins, group by, window functions, CTEs,
-indexes, and query performance.
+Purpose:
+These notes are for data engineering interview preparation. They summarize common SQL interview topics such as joins, filtering, aggregations, window functions, CTEs, indexing, performance, data modeling, and optimization.
 
-A window function performs a calculation across rows related to the current row.
-Examples include ROW_NUMBER, RANK, DENSE_RANK, LEAD, LAG, and SUM over a partition.
+Source note:
+This file was created as a simplified and rewritten study guide from common SQL data engineering interview topics.
+
+------------------------------------------------------------
+1. What is SQL?
+------------------------------------------------------------
+SQL stands for Structured Query Language. It is used to query, transform, insert, update, and delete data in relational databases and data warehouses.
+
+Interview answer:
+Data engineers use SQL to validate data, transform raw data, build reporting tables, create data models, and support analytics.
+
+------------------------------------------------------------
+2. What is the difference between INNER JOIN and LEFT JOIN?
+------------------------------------------------------------
+INNER JOIN returns only rows that match in both tables.
+
+LEFT JOIN returns all rows from the left table and matching rows from the right table. If there is no match, the right table columns return NULL.
+
+Interview answer:
+Use INNER JOIN when you only want matching records. Use LEFT JOIN when the left table is the main table and you want to keep all of its rows.
+
+------------------------------------------------------------
+3. What is a RIGHT JOIN?
+------------------------------------------------------------
+RIGHT JOIN returns all rows from the right table and matching rows from the left table.
+
+Interview answer:
+RIGHT JOIN is less common because many developers prefer rewriting it as a LEFT JOIN for readability.
+
+------------------------------------------------------------
+4. What is a FULL OUTER JOIN?
+------------------------------------------------------------
+FULL OUTER JOIN returns all rows from both tables. If a row does not match, missing columns are filled with NULL.
+
+Interview answer:
+A FULL OUTER JOIN is useful when comparing two datasets and finding records that exist on one side but not the other.
+
+------------------------------------------------------------
+5. What is a CROSS JOIN?
+------------------------------------------------------------
+CROSS JOIN returns every combination of rows from two tables.
+
+Interview answer:
+If table A has 10 rows and table B has 5 rows, a CROSS JOIN returns 50 rows. It should be used carefully because results can become very large.
+
+------------------------------------------------------------
+6. What is a self join?
+------------------------------------------------------------
+A self join is when a table is joined to itself using two aliases.
+
+Interview answer:
+Self joins are useful for hierarchy data, such as employees and managers stored in the same employee table.
+
+------------------------------------------------------------
+7. What is the difference between WHERE and HAVING?
+------------------------------------------------------------
+WHERE filters rows before grouping.
+
+HAVING filters groups after aggregation.
+
+Interview answer:
+Use WHERE for normal row-level filters. Use HAVING when filtering aggregate results such as COUNT, SUM, AVG, MIN, or MAX.
+
+------------------------------------------------------------
+8. What is GROUP BY?
+------------------------------------------------------------
+GROUP BY groups rows that share the same values in selected columns.
+
+Interview answer:
+GROUP BY is commonly used with aggregate functions like COUNT, SUM, AVG, MIN, and MAX.
+
+------------------------------------------------------------
+9. What are aggregate functions?
+------------------------------------------------------------
+Aggregate functions summarize multiple rows into one result.
+
+Common aggregate functions:
+- COUNT
+- SUM
+- AVG
+- MIN
+- MAX
+
+Interview answer:
+Data engineers use aggregate functions for reporting, quality checks, and business metrics.
+
+------------------------------------------------------------
+10. What is COUNT(*)?
+------------------------------------------------------------
+COUNT(*) counts all rows in a result set.
+
+Interview answer:
+COUNT(*) is often used to check row counts after loading or transforming data.
+
+------------------------------------------------------------
+11. What is DISTINCT?
+------------------------------------------------------------
+DISTINCT removes duplicate rows from query output.
+
+Interview answer:
+DISTINCT is useful when you only want unique values, but it can add cost because the database must remove duplicates.
+
+------------------------------------------------------------
+12. What is the difference between UNION and UNION ALL?
+------------------------------------------------------------
+UNION combines results and removes duplicate rows.
+
+UNION ALL combines results and keeps all rows, including duplicates.
+
+Interview answer:
+UNION ALL is usually faster because it does not perform duplicate removal.
+
+------------------------------------------------------------
+13. How do you find duplicate rows?
+------------------------------------------------------------
+Use GROUP BY with HAVING COUNT(*) > 1.
+
+Example idea:
+Group by the columns that define a duplicate and count how many times each group appears.
+
+Interview answer:
+For actual duplicate records, use ROW_NUMBER() over a partition and filter rows where row number is greater than 1.
+
+------------------------------------------------------------
+14. How do you delete duplicate rows while keeping one?
+------------------------------------------------------------
+A common method is to use ROW_NUMBER() in a CTE.
+
+Interview answer:
+Partition by the columns that define duplicates, order by a unique ID, then delete rows where ROW_NUMBER is greater than 1.
+
+------------------------------------------------------------
+15. What is a CTE?
+------------------------------------------------------------
+CTE means Common Table Expression. It is a temporary named result set created with the WITH keyword.
+
+Interview answer:
+CTEs make SQL easier to read because they split complex logic into smaller steps.
+
+------------------------------------------------------------
+16. When would you use a CTE instead of a subquery?
+------------------------------------------------------------
+Use a CTE when the query has multiple logical steps or when readability is important.
+
+Interview answer:
+Subqueries are fine for simple one-time filters, but CTEs are better for complex transformations.
+
+------------------------------------------------------------
+17. What is a subquery?
+------------------------------------------------------------
+A subquery is a query inside another query.
+
+Interview answer:
+Subqueries can be used in SELECT, FROM, or WHERE clauses, but deeply nested subqueries can be hard to read.
+
+------------------------------------------------------------
+18. What is a correlated subquery?
+------------------------------------------------------------
+A correlated subquery depends on values from the outer query.
+
+Interview answer:
+Correlated subqueries can be slow on large datasets because they may run repeatedly for each row in the outer query.
+
+------------------------------------------------------------
+19. What is a window function?
+------------------------------------------------------------
+A window function performs a calculation across related rows without collapsing rows into one result.
+
+Interview answer:
+Window functions are useful for rankings, running totals, moving averages, and comparing one row to another row.
+
+------------------------------------------------------------
+20. What does the OVER clause do?
+------------------------------------------------------------
+The OVER clause defines the window of rows used by a window function.
+
+Interview answer:
+OVER can include PARTITION BY to group rows and ORDER BY to sort rows within each partition.
+
+------------------------------------------------------------
+21. What is ROW_NUMBER()?
+------------------------------------------------------------
+ROW_NUMBER assigns a unique sequence number to each row in a window.
+
+Interview answer:
+ROW_NUMBER is useful for deduplication and selecting the top record per group.
+
+------------------------------------------------------------
+22. What is the difference between RANK, DENSE_RANK, and ROW_NUMBER?
+------------------------------------------------------------
+ROW_NUMBER gives every row a unique number.
+
+RANK gives ties the same rank but skips the next rank.
+
+DENSE_RANK gives ties the same rank and does not skip the next rank.
+
+Interview answer:
+Use ROW_NUMBER when you only want one row. Use RANK or DENSE_RANK when ties matter.
+
+------------------------------------------------------------
+23. What are LEAD and LAG?
+------------------------------------------------------------
+LAG looks at a previous row. LEAD looks at a future row.
+
+Interview answer:
+LEAD and LAG are useful for comparing current values to previous or next values, such as month-over-month changes.
+
+------------------------------------------------------------
+24. How do you calculate a running total?
+------------------------------------------------------------
+Use SUM as a window function with ORDER BY.
+
+Interview answer:
+A running total adds values over time while keeping each original row visible.
+
+------------------------------------------------------------
+25. What is a CASE statement?
+------------------------------------------------------------
+CASE adds conditional logic to SQL.
+
+Interview answer:
+CASE is useful for creating categories, flags, business rules, and cleaned values in data pipelines.
+
+------------------------------------------------------------
+26. What is COALESCE?
+------------------------------------------------------------
+COALESCE returns the first non-NULL value from a list.
+
+Interview answer:
+COALESCE is useful for replacing missing values or choosing the best available column from multiple sources.
+
+------------------------------------------------------------
+27. How do you handle NULL values?
+------------------------------------------------------------
+Use IS NULL or IS NOT NULL to filter NULL values.
+
+Interview answer:
+NULL means unknown or missing. Normal comparisons like = NULL do not work correctly.
+
+------------------------------------------------------------
+28. What is a primary key?
+------------------------------------------------------------
+A primary key uniquely identifies each row in a table.
+
+Interview answer:
+Primary keys cannot be NULL and should be unique.
+
+------------------------------------------------------------
+29. What is a foreign key?
+------------------------------------------------------------
+A foreign key links one table to another table by referencing a primary key.
+
+Interview answer:
+Foreign keys help maintain relationships and referential integrity between tables.
+
+------------------------------------------------------------
+30. What is a unique key?
+------------------------------------------------------------
+A unique key ensures values in a column or group of columns are unique.
+
+Interview answer:
+A table can have multiple unique keys, but usually only one primary key.
+
+------------------------------------------------------------
+31. What is an index?
+------------------------------------------------------------
+An index is a data structure that helps a database find rows faster.
+
+Interview answer:
+Indexes speed up reads but can slow down inserts, updates, and deletes because the index also needs to be updated.
+
+------------------------------------------------------------
+32. What is an execution plan?
+------------------------------------------------------------
+An execution plan shows how the database plans to run a query.
+
+Interview answer:
+Execution plans help identify performance problems such as full table scans, bad joins, missing indexes, or expensive sorts.
+
+------------------------------------------------------------
+33. How do you optimize a slow SQL query?
+------------------------------------------------------------
+Common steps:
+- Check the execution plan
+- Avoid SELECT *
+- Filter early
+- Use indexes when appropriate
+- Use partition filters
+- Reduce unnecessary joins
+- Break complex logic into CTEs
+- Avoid functions on indexed columns in WHERE filters
+
+Interview answer:
+Start by finding the biggest cost in the execution plan, then reduce scanned data and improve join/filter logic.
+
+------------------------------------------------------------
+34. What is partitioning in SQL?
+------------------------------------------------------------
+Partitioning splits a large table into smaller parts based on a column such as date or region.
+
+Interview answer:
+Partitioning improves performance because queries can scan only the relevant partitions.
+
+------------------------------------------------------------
+35. What is the difference between clustered and non-clustered indexes?
+------------------------------------------------------------
+A clustered index controls the physical order of data in a table.
+
+A non-clustered index is separate from the table and points to the data.
+
+Interview answer:
+A table usually has only one clustered index but can have multiple non-clustered indexes.
+
+------------------------------------------------------------
+36. What is a view?
+------------------------------------------------------------
+A view is a saved SQL query that behaves like a virtual table.
+
+Interview answer:
+Views simplify complex SQL and can also hide sensitive columns from users.
+
+------------------------------------------------------------
+37. What is a materialized view?
+------------------------------------------------------------
+A materialized view stores the result of a query physically.
+
+Interview answer:
+Materialized views can improve performance for expensive queries, but they must be refreshed when source data changes.
+
+------------------------------------------------------------
+38. What are ACID properties?
+------------------------------------------------------------
+ACID means Atomicity, Consistency, Isolation, and Durability.
+
+Interview answer:
+ACID properties help ensure database transactions are reliable and data remains correct.
+
+------------------------------------------------------------
+39. What is normalization?
+------------------------------------------------------------
+Normalization organizes data into related tables to reduce duplicate data and improve data integrity.
+
+Interview answer:
+In transactional systems, normalization helps avoid update problems and keeps data consistent.
+
+------------------------------------------------------------
+40. What is denormalization?
+------------------------------------------------------------
+Denormalization intentionally adds redundancy by combining data.
+
+Interview answer:
+Data engineers often denormalize tables in data warehouses to make analytical queries faster and easier.
+
+------------------------------------------------------------
+41. What is a star schema?
+------------------------------------------------------------
+A star schema has a central fact table connected to dimension tables.
+
+Interview answer:
+Fact tables store measurable events, while dimension tables store descriptive information such as customer, product, or date.
+
+------------------------------------------------------------
+42. What is OLTP?
+------------------------------------------------------------
+OLTP means Online Transaction Processing.
+
+Interview answer:
+OLTP systems handle frequent small transactions, such as orders, payments, and account updates.
+
+------------------------------------------------------------
+43. What is OLAP?
+------------------------------------------------------------
+OLAP means Online Analytical Processing.
+
+Interview answer:
+OLAP systems are designed for reporting, analytics, dashboards, and large read-heavy queries.
+
+------------------------------------------------------------
+44. What is the difference between OLTP and OLAP?
+------------------------------------------------------------
+OLTP is optimized for fast transactions and writes.
+
+OLAP is optimized for analytical reads and aggregations.
+
+Interview answer:
+Data engineers often move data from OLTP systems into OLAP systems for reporting and analytics.
+
+------------------------------------------------------------
+45. What is an upsert?
+------------------------------------------------------------
+Upsert means update if the row exists, otherwise insert a new row.
+
+Interview answer:
+In SQL, upserts are often done with MERGE or database-specific syntax.
+
+------------------------------------------------------------
+46. What is MERGE?
+------------------------------------------------------------
+MERGE is a SQL command used to insert, update, or delete rows based on matching conditions.
+
+Interview answer:
+MERGE is useful for incremental loads and slowly changing dimension logic.
+
+------------------------------------------------------------
+47. What is SCD Type 2?
+------------------------------------------------------------
+SCD Type 2 means Slowly Changing Dimension Type 2. It tracks history by adding a new row when a dimension value changes.
+
+Interview answer:
+SCD Type 2 tables often use valid_from, valid_to, and is_current columns.
+
+------------------------------------------------------------
+48. What is the difference between DELETE and TRUNCATE?
+------------------------------------------------------------
+DELETE removes rows and can use a WHERE clause.
+
+TRUNCATE removes all rows faster and usually cannot filter specific rows.
+
+Interview answer:
+Use DELETE when you need conditions. Use TRUNCATE when clearing a whole table and the database rules allow it.
+
+------------------------------------------------------------
+49. What is a stored procedure?
+------------------------------------------------------------
+A stored procedure is a saved group of SQL statements that can be executed as one unit.
+
+Interview answer:
+Stored procedures are useful for reusable database logic, but complex procedures can be harder to maintain than modular pipeline code.
+
+------------------------------------------------------------
+50. What is a trigger?
+------------------------------------------------------------
+A trigger automatically runs when a database event happens, such as insert, update, or delete.
+
+Interview answer:
+Triggers can be used for auditing or enforcing rules, but they can make systems harder to debug if overused.
+
+------------------------------------------------------------
+51. What is data profiling?
+------------------------------------------------------------
+Data profiling means exploring data to understand quality, structure, patterns, and problems.
+
+Interview answer:
+Data engineers profile data by checking row counts, NULL percentages, duplicates, min/max values, and distinct counts.
+
+------------------------------------------------------------
+52. What is pivoting in SQL?
+------------------------------------------------------------
+Pivoting turns row values into columns.
+
+Interview answer:
+Pivoting is often used to create summary reports. It can be done with a PIVOT command or with CASE statements and aggregates.
+
+------------------------------------------------------------
+53. What is sharding?
+------------------------------------------------------------
+Sharding splits data across multiple databases or servers.
+
+Interview answer:
+Sharding is used to scale large systems, but it adds complexity because data is spread across multiple places.
+
+------------------------------------------------------------
+54. What is sargability?
+------------------------------------------------------------
+Sargability means a query condition can use an index efficiently.
+
+Interview answer:
+Avoid wrapping indexed columns in functions inside WHERE clauses because that may stop the database from using the index.
+
+------------------------------------------------------------
+55. What is the N+1 query problem?
+------------------------------------------------------------
+The N+1 problem happens when an application runs one query to get records and then runs another query for each record.
+
+Interview answer:
+Data engineers usually fix this with joins or set-based SQL instead of many repeated queries.
+
+------------------------------------------------------------
+56. How do you select the second-highest salary?
+------------------------------------------------------------
+One simple method is to select the maximum salary that is less than the overall maximum salary.
+
+Interview answer:
+Window functions like DENSE_RANK can also solve this, especially if ties need to be handled.
+
+------------------------------------------------------------
+57. How do you convert a string to a date?
+------------------------------------------------------------
+The syntax depends on the database.
+
+Interview answer:
+Many systems support CAST, while others have functions like TO_DATE or CONVERT. Always check the SQL dialect.
+
+------------------------------------------------------------
+58. What is a temporary table?
+------------------------------------------------------------
+A temporary table stores temporary results during a session or query process.
+
+Interview answer:
+Temporary tables are useful for breaking complex transformations into steps, but they may add storage and maintenance overhead.
+
+------------------------------------------------------------
+59. What is a table variable?
+------------------------------------------------------------
+A table variable is a temporary table-like object usually used in stored procedures or scripts.
+
+Interview answer:
+Table variables may be useful for small temporary datasets, but regular temporary tables are often better for larger data.
+
+------------------------------------------------------------
+60. How should I answer SQL interview questions?
+------------------------------------------------------------
+A strong SQL interview answer should include:
+- A clear definition
+- When to use it
+- A simple example
+- A data engineering use case
+- A note about performance when relevant
+
+Example:
+A CTE is a temporary named result set created with WITH. I use CTEs to break a complex transformation into readable steps, such as cleaning raw data, joining reference tables, and then aggregating the final result.
+
+------------------------------------------------------------
+End of Notes
+------------------------------------------------------------
