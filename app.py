@@ -58,7 +58,7 @@ with tab1:
 
     sample_files = []
     if use_sample_docs:
-        sample_files = processor.load_local_files("docs")
+        sample_files = processor.load_local_files("docs", allowed_extensions={".txt"})
 
     all_files = sample_files + list(uploaded_files or [])
 

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "kafka-consumer-groups",
+    "question": "What is a Kafka consumer group and why is it useful?",
+    "expected_file": "kafka_interview_notes.txt"
+  },
+  {
+    "id": "kafka-offsets",
+    "question": "What does an offset represent in Kafka?",
+    "expected_file": "kafka_interview_notes.txt"
+  },
+  {
+    "id": "bigquery-partitioning",
+    "question": "How does BigQuery partitioning improve performance and reduce cost?",
+    "expected_file": "gcp_bigquery_notes.txt"
+  },
+  {
+    "id": "bigquery-clustering",
+    "question": "What is clustering in BigQuery?",
+    "expected_file": "gcp_bigquery_notes.txt"
+  },
+  {
+    "id": "sql-window-functions",
+    "question": "What is a SQL window function used for?",
+    "expected_file": "sql_interview_notes.txt"
+  },
+  {
+    "id": "sql-indexes",
+    "question": "How can a database index improve query performance?",
+    "expected_file": "sql_interview_notes.txt"
+  }
+]

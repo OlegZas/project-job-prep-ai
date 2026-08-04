@@ -143,3 +143,15 @@ These targets should be refined after the baseline evaluation exists:
 - Reinstalled compiled dependencies with Python 3.13-compatible wheels.
 - Confirmed all direct dependencies import and the Streamlit health endpoint returns HTTP 200.
 - Selected the Career Intelligence Platform direction for V2.
+
+### 2026-08-03
+
+- Pinned the verified Python runtime and direct application dependencies.
+- Added a separate pinned development requirements file.
+- Added unit tests for decoding, cleaning, chunking, validation, file filtering, and deterministic file order.
+- Added a repeatable in-process Streamlit render smoke test.
+- Fixed an extra trailing overlap-only chunk and rejected unsafe chunk configurations.
+- Added a six-question retrieval benchmark with hit-rate and reciprocal-rank metrics.
+- Recorded the first baseline: `Hit@3 = 1.0`, `MRR = 1.0`, and 19.081 seconds for 45 chunks plus six queries.
+- Confirmed that embedding recomputation is a measurable latency target for Phase 1.
+- Expanded the README with setup, testing, and evaluation commands.

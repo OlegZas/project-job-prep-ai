@@ -16,19 +16,30 @@ class LocalFile:
 
 class DocumentProcessor:
     def __init__(self, chunk_size=180, overlap=30):
+        if chunk_size <= 0:
+            raise ValueError("chunk_size must be greater than zero")
+
+        if overlap < 0:
+            raise ValueError("overlap cannot be negative")
+
+        if overlap >= chunk_size:
+            raise ValueError("overlap must be smaller than chunk_size")
+
         self.chunk_size = chunk_size
         self.overlap = overlap
 
-    def load_local_files(self, folder_path="docs"):
+    def load_local_files(self, folder_path="docs", allowed_extensions=None):
         folder = Path(folder_path)
 
         if not folder.exists():
             return []
 
+        extensions = allowed_extensions or {".txt", ".md", ".pdf"}
+        extensions = {extension.lower() for extension in extensions}
         files = []
 
-        for file_path in folder.iterdir():
-            if file_path.suffix.lower() in [".txt", ".md", ".pdf"]:
+        for file_path in sorted(folder.iterdir(), key=lambda path: path.name.lower()):
+            if file_path.suffix.lower() in extensions:
                 files.append(LocalFile(file_path))
 
         return files
@@ -84,6 +95,9 @@ class DocumentProcessor:
                 "chunk_number": chunk_number,
                 "text": chunk_text
             })
+
+            if end >= len(words):
+                break
 
             start = end - self.overlap
             chunk_number += 1
