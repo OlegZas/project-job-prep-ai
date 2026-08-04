@@ -1,4 +1,5 @@
 import os
+import time
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -54,6 +55,11 @@ with tab1:
         accept_multiple_files=True
     )
 
+    if st.button("Clear session document index"):
+        st.session_state.pop("document_store", None)
+        st.session_state.pop("indexed_corpus_id", None)
+        st.success("The document index and cached embeddings were cleared for this session.")
+
     processor = DocumentProcessor(chunk_size=180, overlap=30)
 
     sample_files = []
@@ -82,6 +88,10 @@ with tab1:
                 for chunk in chunks[:5]:
                     st.write(f"**File:** {chunk['file_name']}")
                     st.write(f"**Chunk:** {chunk['chunk_number']}")
+                    st.caption(
+                        f"Document ID: {chunk['document_id'][:12]} | "
+                        f"Chunk ID: {chunk['chunk_id'][:12]}"
+                    )
                     st.write(chunk["text"][:500] + "...")
                     st.divider()
         else:
@@ -108,10 +118,69 @@ with tab1:
             st.warning("Please enter a question.")
         else:
             try:
-                with st.spinner("Creating embeddings and searching your documents..."):
-                    store = DocumentStore()
-                    store.add_chunks(chunks)
+                corpus_id = DocumentStore.create_corpus_id(chunks)
+                desired_model = os.getenv(
+                    "OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"
+                )
+                store = st.session_state.get("document_store")
+                index_reused = (
+                    store is not None
+                    and store.embedding_model == desired_model
+                    and st.session_state.get("indexed_corpus_id") == corpus_id
+                )
+
+                index_started_at = time.perf_counter()
+
+                with st.spinner("Preparing the document index..."):
+                    if not index_reused:
+                        if store is None or store.embedding_model != desired_model:
+                            store = DocumentStore()
+
+                        store.reset_cache_stats()
+                        store.add_chunks(chunks)
+                        index_stats = store.get_cache_stats()
+                        st.session_state.document_store = store
+                        st.session_state.indexed_corpus_id = corpus_id
+                    else:
+                        index_stats = {
+                            "hits": len(chunks),
+                            "misses": 0,
+                            "cached_embeddings": len(store.embedding_cache),
+                        }
+
+                index_seconds = time.perf_counter() - index_started_at
+
+                store.reset_cache_stats()
+                search_started_at = time.perf_counter()
+
+                with st.spinner("Searching your documents..."):
                     results = store.search(doc_question, top_k=3)
+
+                search_seconds = time.perf_counter() - search_started_at
+                search_stats = store.get_cache_stats()
+
+                if index_reused:
+                    st.success(
+                        f"Reused the {len(chunks)}-chunk index from this browser session."
+                    )
+                else:
+                    st.info(
+                        f"Index prepared: {index_stats['hits']} cached and "
+                        f"{index_stats['misses']} new chunk embeddings."
+                    )
+
+                metric_col1, metric_col2, metric_col3 = st.columns(3)
+                metric_col1.metric(
+                    "Index",
+                    "Reused" if index_reused else "Updated",
+                    f"{index_seconds:.3f}s",
+                )
+                metric_col2.metric("Indexed chunks", len(store.items))
+                metric_col3.metric(
+                    "Query embedding",
+                    "Cached" if search_stats["hits"] else "New",
+                    f"{search_seconds:.3f}s search",
+                )
 
                 st.write("### Retrieved References")
 
@@ -119,6 +188,10 @@ with tab1:
                     with st.expander(
                         f"{result['file_name']} | Chunk {result['chunk_number']} | Score: {result['score']:.3f}"
                     ):
+                        st.caption(
+                            f"Document ID: {result['document_id'][:12]} | "
+                            f"Chunk ID: {result['chunk_id'][:12]}"
+                        )
                         st.write(result["text"])
 
                 with st.spinner("Generating answer from your documents..."):

@@ -44,18 +44,13 @@ def test_chunk_text_preserves_overlap_without_extra_final_chunk():
 
     chunks = processor.chunk_text("one two three four five six seven", "notes.txt")
 
-    assert chunks == [
-        {
-            "file_name": "notes.txt",
-            "chunk_number": 1,
-            "text": "one two three four",
-        },
-        {
-            "file_name": "notes.txt",
-            "chunk_number": 2,
-            "text": "four five six seven",
-        },
+    assert [chunk["text"] for chunk in chunks] == [
+        "one two three four",
+        "four five six seven",
     ]
+    assert [chunk["chunk_number"] for chunk in chunks] == [1, 2]
+    assert len({chunk["document_id"] for chunk in chunks}) == 1
+    assert len({chunk["chunk_id"] for chunk in chunks}) == 2
 
 
 def test_process_files_ignores_unsupported_files():
@@ -69,6 +64,8 @@ def test_process_files_ignores_unsupported_files():
 
     assert len(chunks) == 1
     assert chunks[0]["file_name"] == "notes.txt"
+    assert len(chunks[0]["document_id"]) == 64
+    assert len(chunks[0]["chunk_id"]) == 64
 
 
 def test_load_local_files_is_filtered_and_deterministic(tmp_path: Path):
@@ -90,3 +87,14 @@ def test_load_local_files_can_limit_extensions(tmp_path: Path):
     files = processor.load_local_files(tmp_path, allowed_extensions={".txt"})
 
     assert [file.name for file in files] == ["study-notes.txt"]
+
+
+def test_content_ids_are_stable_when_a_file_is_renamed():
+    processor = DocumentProcessor(chunk_size=10, overlap=2)
+    content = b"Kafka consumers share work in a consumer group."
+
+    first = processor.process_files([UploadedFileStub("first.txt", content)])
+    renamed = processor.process_files([UploadedFileStub("renamed.txt", content)])
+
+    assert first[0]["document_id"] == renamed[0]["document_id"]
+    assert first[0]["chunk_id"] == renamed[0]["chunk_id"]

@@ -155,3 +155,15 @@ These targets should be refined after the baseline evaluation exists:
 - Recorded the first baseline: `Hit@3 = 1.0`, `MRR = 1.0`, and 19.081 seconds for 45 chunks plus six queries.
 - Confirmed that embedding recomputation is a measurable latency target for Phase 1.
 - Expanded the README with setup, testing, and evaluation commands.
+
+### 2026-08-04
+
+- Added deterministic SHA-256 document, chunk, and corpus identifiers.
+- Added an in-memory embedding cache with hit/miss instrumentation.
+- Reused unchanged document indexes through Streamlit session state.
+- Kept uploaded-document embeddings session-scoped rather than writing resume-derived data to shared storage.
+- Added a user-facing control that clears the session index and embedding cache.
+- Added index state, chunk count, query-cache state, and timing metrics to the document answer UI.
+- Propagated stable IDs into retrieval results and RAG source labels.
+- Expanded the automated suite from 12 to 17 tests.
+- Measured 18.512 seconds cold versus 0.078 seconds warm: 237.33x faster with zero warm-pass API calls.

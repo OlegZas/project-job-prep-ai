@@ -1,3 +1,4 @@
+import hashlib
 import io
 import re
 from pathlib import Path
@@ -78,9 +79,12 @@ class DocumentProcessor:
         text = re.sub(r"\s+", " ", text)
         return text.strip()
 
-    def chunk_text(self, text, file_name):
+    def chunk_text(self, text, file_name, document_id=None):
         words = text.split()
         chunks = []
+
+        if document_id is None:
+            document_id = hashlib.sha256(text.encode("utf-8")).hexdigest()
 
         start = 0
         chunk_number = 1
@@ -89,8 +93,13 @@ class DocumentProcessor:
             end = start + self.chunk_size
             chunk_words = words[start:end]
             chunk_text = " ".join(chunk_words)
+            chunk_id = hashlib.sha256(
+                f"{document_id}:{chunk_number}:{chunk_text}".encode("utf-8")
+            ).hexdigest()
 
             chunks.append({
+                "document_id": document_id,
+                "chunk_id": chunk_id,
                 "file_name": file_name,
                 "chunk_number": chunk_number,
                 "text": chunk_text
@@ -112,7 +121,8 @@ class DocumentProcessor:
             clean_text = self.clean_text(raw_text)
 
             if clean_text:
-                chunks = self.chunk_text(clean_text, file.name)
+                document_id = hashlib.sha256(clean_text.encode("utf-8")).hexdigest()
+                chunks = self.chunk_text(clean_text, file.name, document_id)
                 all_chunks.extend(chunks)
 
         return all_chunks

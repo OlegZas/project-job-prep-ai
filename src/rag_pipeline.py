@@ -12,7 +12,10 @@ class RAGPipeline:
         context_parts = []
 
         for result in search_results:
-            source = f"{result['file_name']} - chunk {result['chunk_number']}"
+            source = (
+                f"{result['file_name']} - chunk {result['chunk_number']} "
+                f"[{result['chunk_id'][:12]}]"
+            )
             text = result["text"]
 
             context_parts.append(f"Source: {source}\n{text}")

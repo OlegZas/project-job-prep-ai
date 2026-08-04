@@ -23,6 +23,9 @@ The target user is someone preparing for a data engineering interview.
 * Generate answers using OpenAI
 * Show references used for the answer
 * Ask live market knowledge questions about data engineering topics
+* Reuse unchanged embeddings within a private browser session
+* Assign stable content-based IDs to documents and chunks
+* Display indexing and retrieval timing
 
 ## Tech Stack
 
@@ -88,6 +91,18 @@ To save a baseline report:
 This command uses the OpenAI embeddings API and therefore has a small API cost. Routine unit tests do not run it.
 
 The initial [retrieval baseline](evals/baseline.json) contains six document-level cases. All six expected documents ranked first (`Hit@3 = 1.0`, `MRR = 1.0`), and the uncached run took 19.081 seconds for 45 chunks. Future benchmarks will add harder chunk-level and ambiguous questions.
+
+The Day 3 [cached retrieval baseline](evals/cached_baseline.json) runs the same corpus and questions twice in one process:
+
+* Cold pass: 18.512 seconds, 51 embedding API calls
+* Warm pass: 0.078 seconds, 51 cache hits, 0 embedding API calls
+* Measured warm-cache speedup: 237.33x
+
+## Session Cache and Privacy
+
+Document and question embeddings are cached only in the current Streamlit browser session. The cache is not written to a shared database or committed to Git. This allows repeated questions to reuse unchanged work without retaining resume-derived data across users.
+
+Changing an uploaded document changes its content ID and refreshes the affected index. The **Clear session document index** button immediately removes the in-session index and cached embeddings.
 
 
 ## Example Questions

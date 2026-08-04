@@ -29,14 +29,7 @@ def load_cases(path: Path) -> list[dict]:
     return cases
 
 
-def evaluate(cases: list[dict], top_k: int) -> dict:
-    processor = DocumentProcessor(chunk_size=180, overlap=30)
-    files = processor.load_local_files(DEFAULT_DOCS, allowed_extensions={".txt"})
-    chunks = processor.process_files(files)
-
-    store = DocumentStore()
-    store.add_chunks(chunks)
-
+def score_cases(store: DocumentStore, cases: list[dict], top_k: int) -> dict:
     results = []
     reciprocal_rank_total = 0.0
 
@@ -64,17 +57,47 @@ def evaluate(cases: list[dict], top_k: int) -> dict:
 
     case_count = len(results)
     return {
+        "case_count": case_count,
+        "hit_rate": sum(result["hit"] for result in results) / case_count,
+        "mean_reciprocal_rank": reciprocal_rank_total / case_count,
+        "results": results,
+    }
+
+
+def run_pass(
+    store: DocumentStore, chunks: list[dict], cases: list[dict], top_k: int
+) -> dict:
+    store.reset_cache_stats()
+    started_at = time.perf_counter()
+    store.add_chunks(chunks)
+    metrics = score_cases(store, cases, top_k)
+    metrics["duration_seconds"] = round(time.perf_counter() - started_at, 3)
+    metrics["embedding_cache"] = store.get_cache_stats()
+    return metrics
+
+
+def evaluate(cases: list[dict], top_k: int) -> dict:
+    processor = DocumentProcessor(chunk_size=180, overlap=30)
+    files = processor.load_local_files(DEFAULT_DOCS, allowed_extensions={".txt"})
+    chunks = processor.process_files(files)
+    store = DocumentStore()
+
+    cold_run = run_pass(store, chunks, cases, top_k)
+    warm_run = run_pass(store, chunks, cases, top_k)
+    warm_seconds = warm_run["duration_seconds"]
+    speedup = cold_run["duration_seconds"] / warm_seconds if warm_seconds else None
+
+    return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "embedding_model": store.embedding_model,
         "document_count": len(files),
         "chunk_count": len(chunks),
         "chunk_size": processor.chunk_size,
         "chunk_overlap": processor.overlap,
-        "case_count": case_count,
         "top_k": top_k,
-        "hit_rate": sum(result["hit"] for result in results) / case_count,
-        "mean_reciprocal_rank": reciprocal_rank_total / case_count,
-        "results": results,
+        "cold_run": cold_run,
+        "warm_run": warm_run,
+        "warm_speedup": round(speedup, 2) if speedup is not None else None,
     }
 
 
@@ -98,9 +121,7 @@ def main() -> None:
     if not os.getenv("OPENAI_API_KEY"):
         raise RuntimeError("OPENAI_API_KEY is required to run the retrieval evaluation")
 
-    started_at = time.perf_counter()
     report = evaluate(load_cases(args.cases), args.top_k)
-    report["duration_seconds"] = round(time.perf_counter() - started_at, 3)
     output = json.dumps(report, indent=2)
     print(output)
 
