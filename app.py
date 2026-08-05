@@ -68,19 +68,74 @@ with tab1:
 
     all_files = sample_files + list(uploaded_files or [])
 
+    documents = []
     chunks = []
 
     if all_files:
-        st.success(f"{len(all_files)} file(s) ready for processing.")
+        processing_result = processor.process_files_with_metadata(all_files)
+        documents = processing_result["documents"]
+        chunks = processing_result["chunks"]
 
-        st.write("Files being used:")
-        for file in all_files:
-            st.write(f"- {file.name}")
+        indexed_count = sum(
+            document["status"] == "indexed" for document in documents
+        )
+        duplicate_count = sum(
+            document["status"] == "duplicate" for document in documents
+        )
+        issue_count = sum(
+            document["status"] in {"empty", "unsupported", "error"}
+            for document in documents
+        )
 
-        chunks = processor.process_files(all_files)
+        summary_col1, summary_col2, summary_col3, summary_col4 = st.columns(4)
+        summary_col1.metric("Files received", len(documents))
+        summary_col2.metric("Unique documents", indexed_count)
+        summary_col3.metric("Duplicates skipped", duplicate_count)
+        summary_col4.metric("Processing issues", issue_count)
+
+        st.write("### Document Catalog")
+        catalog_rows = []
+
+        for document in documents:
+            catalog_rows.append(
+                {
+                    "File": document["file_name"],
+                    "Source": document["source_type"].title(),
+                    "Type": document["file_type"],
+                    "Size (KB)": round(document["file_size_bytes"] / 1024, 1),
+                    "Words": document["word_count"],
+                    "Chunks": document["chunk_count"],
+                    "Status": document["status"].title(),
+                    "Content ID": (
+                        document["document_id"][:12]
+                        if document["document_id"]
+                        else "—"
+                    ),
+                    "Duplicate of": document["duplicate_of"] or "—",
+                }
+            )
+
+        st.dataframe(catalog_rows, width="stretch", hide_index=True)
+        st.caption(
+            "Document metadata and embeddings remain in this browser session; "
+            "uploaded files are not written to a shared project database."
+        )
+
+        if duplicate_count:
+            st.warning(
+                f"Skipped {duplicate_count} duplicate file(s) with content that "
+                "was already indexed."
+            )
+
+        failed_documents = [
+            document for document in documents if document["status"] == "error"
+        ]
+        for document in failed_documents:
+            st.error(f"Could not process {document['file_name']}: {document['error']}")
 
         st.write("### Document Processing Results")
         st.write(f"Total files: {len(all_files)}")
+        st.write(f"Unique documents indexed: {indexed_count}")
         st.write(f"Total text chunks created: {len(chunks)}")
 
         if chunks:

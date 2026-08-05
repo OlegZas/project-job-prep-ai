@@ -167,3 +167,14 @@ These targets should be refined after the baseline evaluation exists:
 - Propagated stable IDs into retrieval results and RAG source labels.
 - Expanded the automated suite from 12 to 17 tests.
 - Measured 18.512 seconds cold versus 0.078 seconds warm: 237.33x faster with zero warm-pass API calls.
+
+#### Day 4
+
+- Added a structured document catalog with file type, source, size, word count, chunk count, status, content ID, and duplicate lineage.
+- Added content-based deduplication before chunking and embedding.
+- Added explicit `indexed`, `duplicate`, `empty`, `unsupported`, and `error` processing states.
+- Isolated per-file parsing failures so one malformed document does not stop other documents.
+- Avoided reading uploaded file bytes twice during metadata extraction and parsing.
+- Added catalog summary metrics and duplicate/error feedback to the Streamlit UI.
+- Kept document metadata session-scoped to avoid persisting resume filenames or derived data without user consent.
+- Expanded the automated suite from 17 to 21 tests.

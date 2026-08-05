@@ -1,6 +1,7 @@
 import hashlib
 import io
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 from pypdf import PdfReader
@@ -16,6 +17,8 @@ class LocalFile:
 
 
 class DocumentProcessor:
+    supported_extensions = {".txt", ".md", ".pdf"}
+
     def __init__(self, chunk_size=180, overlap=30):
         if chunk_size <= 0:
             raise ValueError("chunk_size must be greater than zero")
@@ -45,9 +48,11 @@ class DocumentProcessor:
 
         return files
 
-    def read_file(self, uploaded_file):
+    def read_file(self, uploaded_file, file_bytes=None):
         file_name = uploaded_file.name.lower()
-        file_bytes = uploaded_file.getvalue()
+
+        if file_bytes is None:
+            file_bytes = uploaded_file.getvalue()
 
         if file_name.endswith(".pdf"):
             return self.read_pdf(file_bytes)
@@ -56,6 +61,25 @@ class DocumentProcessor:
             return self.read_text(file_bytes)
 
         return ""
+
+    def create_document_record(self, file):
+        file_name = getattr(file, "name", "unknown")
+        extension = Path(file_name).suffix.lower()
+
+        return {
+            "document_id": None,
+            "file_name": file_name,
+            "file_type": extension.removeprefix(".").upper() or "UNKNOWN",
+            "source_type": "sample" if isinstance(file, LocalFile) else "upload",
+            "file_size_bytes": 0,
+            "character_count": 0,
+            "word_count": 0,
+            "chunk_count": 0,
+            "status": "pending",
+            "duplicate_of": None,
+            "error": None,
+            "processed_at": datetime.now(timezone.utc).isoformat(),
+        }
 
     def read_text(self, file_bytes):
         try:
@@ -113,16 +137,56 @@ class DocumentProcessor:
 
         return chunks
 
-    def process_files(self, files):
+    def process_files_with_metadata(self, files):
+        documents = []
         all_chunks = []
+        indexed_documents = {}
 
         for file in files:
-            raw_text = self.read_file(file)
-            clean_text = self.clean_text(raw_text)
+            record = self.create_document_record(file)
+            extension = Path(record["file_name"]).suffix.lower()
 
-            if clean_text:
+            try:
+                file_bytes = file.getvalue()
+                record["file_size_bytes"] = len(file_bytes)
+
+                if extension not in self.supported_extensions:
+                    record["status"] = "unsupported"
+                    documents.append(record)
+                    continue
+
+                raw_text = self.read_file(file, file_bytes=file_bytes)
+                clean_text = self.clean_text(raw_text)
+
+                if not clean_text:
+                    record["status"] = "empty"
+                    documents.append(record)
+                    continue
+
                 document_id = hashlib.sha256(clean_text.encode("utf-8")).hexdigest()
+                record["document_id"] = document_id
+                record["character_count"] = len(clean_text)
+                record["word_count"] = len(clean_text.split())
+
+                if document_id in indexed_documents:
+                    record["status"] = "duplicate"
+                    record["duplicate_of"] = indexed_documents[document_id]
+                    documents.append(record)
+                    continue
+
                 chunks = self.chunk_text(clean_text, file.name, document_id)
+                record["chunk_count"] = len(chunks)
+                record["status"] = "indexed"
+                indexed_documents[document_id] = file.name
                 all_chunks.extend(chunks)
 
-        return all_chunks
+            except Exception as error:
+                record["status"] = "error"
+                record["error"] = f"{type(error).__name__}: {error}"
+
+            documents.append(record)
+
+        return {"documents": documents, "chunks": all_chunks}
+
+    def process_files(self, files):
+        return self.process_files_with_metadata(files)["chunks"]

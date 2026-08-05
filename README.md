@@ -26,6 +26,9 @@ The target user is someone preparing for a data engineering interview.
 * Reuse unchanged embeddings within a private browser session
 * Assign stable content-based IDs to documents and chunks
 * Display indexing and retrieval timing
+* Catalog document metadata and per-file processing status
+* Skip duplicate content before chunking or embedding
+* Isolate malformed files so one failure does not stop the corpus
 
 ## Tech Stack
 
@@ -100,9 +103,11 @@ The Day 3 [cached retrieval baseline](evals/cached_baseline.json) runs the same 
 
 ## Session Cache and Privacy
 
-Document and question embeddings are cached only in the current Streamlit browser session. The cache is not written to a shared database or committed to Git. This allows repeated questions to reuse unchanged work without retaining resume-derived data across users.
+Document metadata, document-derived embeddings, and question embeddings are retained only in the current Streamlit browser session. They are not written to a shared database or committed to Git. This allows repeated questions to reuse unchanged work without retaining resume-derived data across users.
 
 Changing an uploaded document changes its content ID and refreshes the affected index. The **Clear session document index** button immediately removes the in-session index and cached embeddings.
+
+The document catalog uses content hashes to identify duplicates even when two files have different names. Duplicate files remain visible in the catalog for transparency but do not create repeated chunks or embedding API calls.
 
 
 ## Example Questions

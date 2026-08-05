@@ -98,3 +98,73 @@ def test_content_ids_are_stable_when_a_file_is_renamed():
 
     assert first[0]["document_id"] == renamed[0]["document_id"]
     assert first[0]["chunk_id"] == renamed[0]["chunk_id"]
+
+
+def test_duplicate_content_is_cataloged_and_chunked_once():
+    processor = DocumentProcessor(chunk_size=10, overlap=2)
+    content = b"Kafka consumers share work in a consumer group."
+    files = [
+        UploadedFileStub("original.txt", content),
+        UploadedFileStub("copy.md", content),
+    ]
+
+    result = processor.process_files_with_metadata(files)
+
+    assert [document["status"] for document in result["documents"]] == [
+        "indexed",
+        "duplicate",
+    ]
+    assert result["documents"][1]["duplicate_of"] == "original.txt"
+    assert result["documents"][0]["document_id"] == result["documents"][1][
+        "document_id"
+    ]
+    assert len(result["chunks"]) == 1
+
+
+def test_same_filename_with_changed_content_is_not_a_duplicate():
+    processor = DocumentProcessor(chunk_size=10, overlap=2)
+    files = [
+        UploadedFileStub("resume.txt", b"Python and SQL"),
+        UploadedFileStub("resume.txt", b"Python, SQL, and Kafka"),
+    ]
+
+    result = processor.process_files_with_metadata(files)
+
+    assert [document["status"] for document in result["documents"]] == [
+        "indexed",
+        "indexed",
+    ]
+    assert result["documents"][0]["document_id"] != result["documents"][1][
+        "document_id"
+    ]
+
+
+def test_empty_and_unsupported_files_have_catalog_statuses():
+    processor = DocumentProcessor()
+    files = [
+        UploadedFileStub("empty.txt", b"  \n\t"),
+        UploadedFileStub("table.csv", b"skill,years"),
+    ]
+
+    result = processor.process_files_with_metadata(files)
+
+    assert [document["status"] for document in result["documents"]] == [
+        "empty",
+        "unsupported",
+    ]
+    assert result["chunks"] == []
+
+
+def test_malformed_pdf_is_reported_without_stopping_other_files():
+    processor = DocumentProcessor(chunk_size=10, overlap=2)
+    files = [
+        UploadedFileStub("broken.pdf", b"not a valid PDF"),
+        UploadedFileStub("notes.txt", b"BigQuery partitioning lowers scan cost."),
+    ]
+
+    result = processor.process_files_with_metadata(files)
+
+    assert result["documents"][0]["status"] == "error"
+    assert result["documents"][0]["error"]
+    assert result["documents"][1]["status"] == "indexed"
+    assert len(result["chunks"]) == 1

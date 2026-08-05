@@ -7,3 +7,6 @@ def test_app_renders_without_exceptions():
     assert not app.exception
     assert app.title[0].value.strip() == "DataPrep AI"
     assert len(app.tabs) == 2
+    assert len(app.dataframe) == 1
+    assert len(app.dataframe[0].value) == 3
+    assert set(app.dataframe[0].value["Status"]) == {"Indexed"}
