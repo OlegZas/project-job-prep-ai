@@ -1,0 +1,357 @@
+{
+  "generated_at": "2026-08-05T06:15:33.200557+00:00",
+  "embedding_model": "text-embedding-3-small",
+  "document_count": 3,
+  "chunk_count": 45,
+  "chunk_size": 180,
+  "chunk_overlap": 30,
+  "top_k": 4,
+  "min_score": 0.25,
+  "cold_run": {
+    "case_count": 10,
+    "hit_rate": 1.0,
+    "mean_reciprocal_rank": 0.8833333333333334,
+    "results": [
+      {
+        "id": "kafka-consumer-groups",
+        "expected_file": "kafka_interview_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "consumer group",
+          "parallel"
+        ],
+        "hit": true
+      },
+      {
+        "id": "kafka-offsets",
+        "expected_file": "kafka_interview_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "offset",
+          "position"
+        ],
+        "hit": true
+      },
+      {
+        "id": "bigquery-partitioning",
+        "expected_file": "gcp_bigquery_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt",
+          "sql_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "partition",
+          "data scanned"
+        ],
+        "hit": true
+      },
+      {
+        "id": "bigquery-clustering",
+        "expected_file": "gcp_bigquery_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt"
+        ],
+        "expected_terms": [
+          "clustering",
+          "columns"
+        ],
+        "hit": true
+      },
+      {
+        "id": "sql-window-functions",
+        "expected_file": "sql_interview_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "window function",
+          "without collapsing"
+        ],
+        "hit": true
+      },
+      {
+        "id": "sql-indexes",
+        "expected_file": "sql_interview_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "index",
+          "performance"
+        ],
+        "hit": true
+      },
+      {
+        "id": "kafka-isr",
+        "expected_file": "kafka_interview_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "in-sync replicas",
+          "leader"
+        ],
+        "hit": true
+      },
+      {
+        "id": "kafka-acks-all",
+        "expected_file": "kafka_interview_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "acks=all",
+          "acknowledged"
+        ],
+        "hit": true
+      },
+      {
+        "id": "sql-cte",
+        "expected_file": "sql_interview_notes.txt",
+        "rank": 2,
+        "top_files": [
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "common table expression",
+          "with keyword"
+        ],
+        "hit": true
+      },
+      {
+        "id": "bigquery-external-formats",
+        "expected_file": "gcp_bigquery_notes.txt",
+        "rank": 3,
+        "top_files": [
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt"
+        ],
+        "expected_terms": [
+          "efficient formats",
+          "external tables"
+        ],
+        "hit": true
+      }
+    ],
+    "duration_seconds": 16.096,
+    "embedding_cache": {
+      "hits": 0,
+      "misses": 55,
+      "cached_embeddings": 55
+    }
+  },
+  "warm_run": {
+    "case_count": 10,
+    "hit_rate": 1.0,
+    "mean_reciprocal_rank": 0.8833333333333334,
+    "results": [
+      {
+        "id": "kafka-consumer-groups",
+        "expected_file": "kafka_interview_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "consumer group",
+          "parallel"
+        ],
+        "hit": true
+      },
+      {
+        "id": "kafka-offsets",
+        "expected_file": "kafka_interview_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "offset",
+          "position"
+        ],
+        "hit": true
+      },
+      {
+        "id": "bigquery-partitioning",
+        "expected_file": "gcp_bigquery_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt",
+          "sql_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "partition",
+          "data scanned"
+        ],
+        "hit": true
+      },
+      {
+        "id": "bigquery-clustering",
+        "expected_file": "gcp_bigquery_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt"
+        ],
+        "expected_terms": [
+          "clustering",
+          "columns"
+        ],
+        "hit": true
+      },
+      {
+        "id": "sql-window-functions",
+        "expected_file": "sql_interview_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "window function",
+          "without collapsing"
+        ],
+        "hit": true
+      },
+      {
+        "id": "sql-indexes",
+        "expected_file": "sql_interview_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "index",
+          "performance"
+        ],
+        "hit": true
+      },
+      {
+        "id": "kafka-isr",
+        "expected_file": "kafka_interview_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "in-sync replicas",
+          "leader"
+        ],
+        "hit": true
+      },
+      {
+        "id": "kafka-acks-all",
+        "expected_file": "kafka_interview_notes.txt",
+        "rank": 1,
+        "top_files": [
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt",
+          "kafka_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "acks=all",
+          "acknowledged"
+        ],
+        "hit": true
+      },
+      {
+        "id": "sql-cte",
+        "expected_file": "sql_interview_notes.txt",
+        "rank": 2,
+        "top_files": [
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt",
+          "sql_interview_notes.txt"
+        ],
+        "expected_terms": [
+          "common table expression",
+          "with keyword"
+        ],
+        "hit": true
+      },
+      {
+        "id": "bigquery-external-formats",
+        "expected_file": "gcp_bigquery_notes.txt",
+        "rank": 3,
+        "top_files": [
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt",
+          "gcp_bigquery_notes.txt"
+        ],
+        "expected_terms": [
+          "efficient formats",
+          "external tables"
+        ],
+        "hit": true
+      }
+    ],
+    "duration_seconds": 0.048,
+    "embedding_cache": {
+      "hits": 55,
+      "misses": 0,
+      "cached_embeddings": 55
+    }
+  },
+  "warm_speedup": 335.33
+}

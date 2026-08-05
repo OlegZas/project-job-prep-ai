@@ -2,12 +2,12 @@ import hashlib
 import os
 
 import numpy as np
-from openai import OpenAI
+from src.openai_client import create_openai_client
 
 
 class DocumentStore:
     def __init__(self, client=None, embedding_cache=None):
-        self.client = client or OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.client = client or create_openai_client()
         self.embedding_model = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
         self.embedding_cache = embedding_cache if embedding_cache is not None else {}
         self.items = []
@@ -67,16 +67,32 @@ class DocumentStore:
                 "embedding": embedding
             })
 
-    def search(self, question, top_k=3):
+    def search(self, question, top_k=3, min_score=None):
         if not self.items:
             return []
 
-        question_embedding = self.create_embedding(question)
+        if top_k <= 0:
+            raise ValueError("top_k must be greater than zero")
+
+        if min_score is not None and not -1.0 <= min_score <= 1.0:
+            raise ValueError("min_score must be between -1.0 and 1.0")
+
+        question_embedding = np.asarray(self.create_embedding(question), dtype=float)
+        question_norm = np.linalg.norm(question_embedding)
 
         results = []
 
         for item in self.items:
-            score = np.dot(question_embedding, item["embedding"])
+            item_embedding = np.asarray(item["embedding"], dtype=float)
+            denominator = question_norm * np.linalg.norm(item_embedding)
+            score = (
+                float(np.dot(question_embedding, item_embedding) / denominator)
+                if denominator
+                else 0.0
+            )
+
+            if min_score is not None and score < min_score:
+                continue
 
             results.append({
                 "document_id": item["document_id"],
@@ -84,9 +100,15 @@ class DocumentStore:
                 "file_name": item["file_name"],
                 "chunk_number": item["chunk_number"],
                 "text": item["text"],
-                "score": float(score)
+                "score": score
             })
 
         results.sort(key=lambda x: x["score"], reverse=True)
 
-        return results[:top_k]
+        top_results = results[:top_k]
+
+        for rank, result in enumerate(top_results, start=1):
+            result["rank"] = rank
+            result["citation"] = f"S{rank}"
+
+        return top_results

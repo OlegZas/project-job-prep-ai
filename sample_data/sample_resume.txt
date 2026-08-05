@@ -1,0 +1,6 @@
+Jordan Lee
+Data Engineer
+
+Built Python and SQL ingestion pipelines processing 25 million records per day. Designed dimensional models and partitioned BigQuery tables that reduced reporting query cost by 35 percent. Orchestrated batch workflows with Apache Airflow and implemented data quality checks for freshness, uniqueness, and null values. Containerized services with Docker and used GitHub Actions for automated tests and deployment. Partnered with analysts to document datasets and service-level expectations.
+
+Skills: Python, SQL, BigQuery, GCP, Airflow, Docker, Git, data modeling, ETL, data quality.

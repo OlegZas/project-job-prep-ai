@@ -29,20 +29,29 @@ def load_cases(path: Path) -> list[dict]:
     return cases
 
 
-def score_cases(store: DocumentStore, cases: list[dict], top_k: int) -> dict:
+def score_cases(
+    store: DocumentStore, cases: list[dict], top_k: int, min_score: float
+) -> dict:
     results = []
     reciprocal_rank_total = 0.0
 
     for case in cases:
-        matches = store.search(case["question"], top_k=top_k)
+        matches = store.search(
+            case["question"], top_k=top_k, min_score=min_score
+        )
         ranked_files = [match["file_name"] for match in matches]
+        expected_terms = [term.casefold() for term in case.get("expected_terms", [])]
 
-        try:
-            rank = ranked_files.index(case["expected_file"]) + 1
-            reciprocal_rank = 1.0 / rank
-        except ValueError:
-            rank = None
-            reciprocal_rank = 0.0
+        rank = next(
+            (
+                index
+                for index, match in enumerate(matches, start=1)
+                if match["file_name"] == case["expected_file"]
+                and all(term in match["text"].casefold() for term in expected_terms)
+            ),
+            None,
+        )
+        reciprocal_rank = 1.0 / rank if rank else 0.0
 
         reciprocal_rank_total += reciprocal_rank
         results.append(
@@ -51,6 +60,7 @@ def score_cases(store: DocumentStore, cases: list[dict], top_k: int) -> dict:
                 "expected_file": case["expected_file"],
                 "rank": rank,
                 "top_files": ranked_files,
+                "expected_terms": case.get("expected_terms", []),
                 "hit": rank is not None,
             }
         )
@@ -65,25 +75,29 @@ def score_cases(store: DocumentStore, cases: list[dict], top_k: int) -> dict:
 
 
 def run_pass(
-    store: DocumentStore, chunks: list[dict], cases: list[dict], top_k: int
+    store: DocumentStore,
+    chunks: list[dict],
+    cases: list[dict],
+    top_k: int,
+    min_score: float,
 ) -> dict:
     store.reset_cache_stats()
     started_at = time.perf_counter()
     store.add_chunks(chunks)
-    metrics = score_cases(store, cases, top_k)
+    metrics = score_cases(store, cases, top_k, min_score)
     metrics["duration_seconds"] = round(time.perf_counter() - started_at, 3)
     metrics["embedding_cache"] = store.get_cache_stats()
     return metrics
 
 
-def evaluate(cases: list[dict], top_k: int) -> dict:
+def evaluate(cases: list[dict], top_k: int, min_score: float) -> dict:
     processor = DocumentProcessor(chunk_size=180, overlap=30)
     files = processor.load_local_files(DEFAULT_DOCS, allowed_extensions={".txt"})
     chunks = processor.process_files(files)
     store = DocumentStore()
 
-    cold_run = run_pass(store, chunks, cases, top_k)
-    warm_run = run_pass(store, chunks, cases, top_k)
+    cold_run = run_pass(store, chunks, cases, top_k, min_score)
+    warm_run = run_pass(store, chunks, cases, top_k, min_score)
     warm_seconds = warm_run["duration_seconds"]
     speedup = cold_run["duration_seconds"] / warm_seconds if warm_seconds else None
 
@@ -95,6 +109,7 @@ def evaluate(cases: list[dict], top_k: int) -> dict:
         "chunk_size": processor.chunk_size,
         "chunk_overlap": processor.overlap,
         "top_k": top_k,
+        "min_score": min_score,
         "cold_run": cold_run,
         "warm_run": warm_run,
         "warm_speedup": round(speedup, 2) if speedup is not None else None,
@@ -107,6 +122,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--cases", type=Path, default=DEFAULT_CASES)
     parser.add_argument("--top-k", type=int, default=3)
+    parser.add_argument("--min-score", type=float, default=0.25)
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
 
@@ -118,10 +134,13 @@ def main() -> None:
     if args.top_k <= 0:
         raise ValueError("--top-k must be greater than zero")
 
+    if not 0 <= args.min_score <= 1:
+        raise ValueError("--min-score must be between zero and one")
+
     if not os.getenv("OPENAI_API_KEY"):
         raise RuntimeError("OPENAI_API_KEY is required to run the retrieval evaluation")
 
-    report = evaluate(load_cases(args.cases), args.top_k)
+    report = evaluate(load_cases(args.cases), args.top_k, args.min_score)
     output = json.dumps(report, indent=2)
     print(output)
 

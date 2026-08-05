@@ -4,6 +4,7 @@ import time
 import streamlit as st
 from dotenv import load_dotenv
 
+from src.career_ui import render_career_match, render_interview_lab
 from src.file_loader import DocumentProcessor
 from src.document_store import DocumentStore
 from src.rag_pipeline import RAGPipeline
@@ -13,24 +14,36 @@ load_dotenv()
 
 st.set_page_config(
     page_title="DataPrep AI",
+    page_icon="⚙️",
     layout="wide"
 )
 
+st.markdown(
+    """
+    <style>
+    .block-container {max-width: 1250px; padding-top: 2rem;}
+    [data-testid="stMetric"] {background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.8rem; border-radius: 0.75rem;}
+    [data-testid="stMetricLabel"] {font-weight: 600;}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title(" DataPrep AI")
-st.subheader("Data Engineering Interview Prep Assistant")
+st.subheader("Data Engineering Career Intelligence Platform")
 
 st.write(
     """
-    DataPrep AI helps data engineering candidates prepare for interviews using two modes:
-
-    **Mode 1:** Search uploaded interview documents, resumes, job descriptions, and study notes.  
-    **Mode 2:** Ask live market knowledge questions about data engineering tools, trends, and skills.
+    Turn résumés, job descriptions, and study notes into cited answers, transparent
+    skill-gap analysis, targeted learning plans, and role-specific interview practice.
     """
 )
 
 st.divider()
 
-tab1, tab2 = st.tabs(["Interview Documents", "Live Market Knowledge"])
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["Document Q&A", "Career Match", "Interview Lab", "Market Knowledge"]
+)
 
 
 with tab1:
@@ -157,6 +170,37 @@ with tab1:
 
     st.subheader("Ask a question about your documents")
 
+    history = st.session_state.setdefault("document_chat_history", [])
+    if history:
+        history_header, history_action = st.columns([4, 1])
+        history_header.write("### Conversation")
+        if history_action.button("Clear conversation"):
+            st.session_state.document_chat_history = []
+            st.rerun()
+
+        for exchange in history:
+            with st.chat_message("user"):
+                st.write(exchange["question"])
+            with st.chat_message("assistant"):
+                st.write(exchange["answer"])
+                st.caption(
+                    f"Index: {'reused' if exchange['index_reused'] else 'updated'} | "
+                    f"Search: {exchange['search_seconds']:.3f}s"
+                )
+                with st.expander("Sources"):
+                    for result in exchange["results"]:
+                        st.write(
+                            f"**[{result['citation']}] {result['file_name']} — "
+                            f"chunk {result['chunk_number']} — {result['score']:.3f}**"
+                        )
+                        st.write(result["text"])
+
+    retrieval_col1, retrieval_col2 = st.columns(2)
+    top_k = retrieval_col1.slider("Maximum sources", 1, 8, 4)
+    min_score = retrieval_col2.slider(
+        "Minimum cosine similarity", 0.0, 1.0, 0.25, 0.05
+    )
+
     doc_question = st.text_input(
         "Document question:",
         placeholder="Example: Based on my notes, explain Kafka consumer groups."
@@ -209,7 +253,9 @@ with tab1:
                 search_started_at = time.perf_counter()
 
                 with st.spinner("Searching your documents..."):
-                    results = store.search(doc_question, top_k=3)
+                    results = store.search(
+                        doc_question, top_k=top_k, min_score=min_score
+                    )
 
                 search_seconds = time.perf_counter() - search_started_at
                 search_stats = store.get_cache_stats()
@@ -237,24 +283,28 @@ with tab1:
                     f"{search_seconds:.3f}s search",
                 )
 
-                st.write("### Retrieved References")
+                if not results:
+                    st.warning(
+                        "No source passed the similarity threshold. Lower the threshold "
+                        "or ask a question covered by the documents."
+                    )
+                else:
+                    with st.spinner("Generating a cited answer from your documents..."):
+                        rag = RAGPipeline()
+                        answer = rag.answer_question(doc_question, results)
 
-                for result in results:
-                    with st.expander(
-                        f"{result['file_name']} | Chunk {result['chunk_number']} | Score: {result['score']:.3f}"
-                    ):
-                        st.caption(
-                            f"Document ID: {result['document_id'][:12]} | "
-                            f"Chunk ID: {result['chunk_id'][:12]}"
-                        )
-                        st.write(result["text"])
-
-                with st.spinner("Generating answer from your documents..."):
-                    rag = RAGPipeline()
-                    answer = rag.answer_question(doc_question, results)
-
-                st.write("### Answer")
-                st.write(answer)
+                    history.append(
+                        {
+                            "question": doc_question.strip(),
+                            "answer": answer,
+                            "results": results,
+                            "index_reused": index_reused,
+                            "index_seconds": index_seconds,
+                            "search_seconds": search_seconds,
+                        }
+                    )
+                    st.session_state.document_chat_history = history[-10:]
+                    st.rerun()
 
             except Exception as error:
                 st.error("Something went wrong while generating the document answer.")
@@ -262,7 +312,15 @@ with tab1:
 
 
 with tab2:
-    st.header("Mode 2: Live Market Knowledge")
+    render_career_match()
+
+
+with tab3:
+    render_interview_lab()
+
+
+with tab4:
+    st.header("Live Market Knowledge")
 
     st.write(
         """
@@ -308,28 +366,28 @@ with tab2:
 
 st.divider()
 
-st.header("Example Questions")
+st.header("Ways to explore DataPrep AI")
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.write("### Document Mode Examples")
+    st.write("### Documents and career match")
     st.write(
         """
         - Based on my resume, what interview topics should I prepare for?
         - Explain Kafka consumer groups from my notes.
         - What SQL topics appear in this job description?
-        - Quiz me on BigQuery partitioning.
+        - Which required skills are missing from my résumé?
         """
     )
 
 with col2:
-    st.write("### Market Mode Examples")
+    st.write("### Interview and market practice")
     st.write(
         """
+        - Generate a system-design question for this role.
+        - Score my answer and suggest a follow-up.
         - What are the latest Kafka improvements?
-        - What skills are companies asking from data engineers?
-        - What should I know about modern ETL tools?
-        - What cloud skills are useful for data engineering interviews?
+        - What cloud skills are useful for current interviews?
         """
     )

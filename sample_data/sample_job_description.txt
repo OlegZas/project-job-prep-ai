@@ -1,0 +1,5 @@
+Senior Data Engineer — Northstar Commerce
+
+We are seeking a senior data engineer to build reliable batch and streaming data products. Required experience includes Python, advanced SQL, Apache Spark, Apache Kafka, data modeling, Airflow, and a cloud data warehouse such as BigQuery. The engineer will design tested ELT pipelines, establish data quality controls, and explain system tradeoffs to technical and business partners.
+
+Preferred experience includes dbt, Terraform, Kubernetes, and CI/CD. Experience operating pipelines with clear observability and incident response practices is a plus.

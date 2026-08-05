@@ -1,19 +1,20 @@
 import os
 
-from openai import OpenAI
+from src.openai_client import create_openai_client
 
 
 class RAGPipeline:
-    def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.chat_model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini")
+    def __init__(self, client=None):
+        self.client = client or create_openai_client()
+        self.chat_model = os.getenv("OPENAI_CHAT_MODEL", "gpt-5.6-luna")
 
     def build_context(self, search_results):
         context_parts = []
 
         for result in search_results:
+            citation = result.get("citation", f"S{len(context_parts) + 1}")
             source = (
-                f"{result['file_name']} - chunk {result['chunk_number']} "
+                f"[{citation}] {result['file_name']} - chunk {result['chunk_number']} "
                 f"[{result['chunk_id'][:12]}]"
             )
             text = result["text"]
@@ -25,23 +26,15 @@ class RAGPipeline:
     def answer_question(self, question, search_results):
         context = self.build_context(search_results)
 
-        prompt = f"""
-You are DataPrep AI, a data engineering interview prep assistant.
+        prompt = f"""Answer as a data engineering interview coach.
+Use only the supplied sources. Cite factual claims with [S1], [S2], and so on.
+If the sources do not answer the question, say exactly: "I don't know based on the uploaded documents."
+Be practical and concise.
 
-Use only the context below to answer the user's question.
-If the answer is not found in the context, say:
-"I don't know based on the uploaded documents."
-
-Keep the answer clear, practical, and interview-focused.
-
-Context:
+Sources:
 {context}
 
-Question:
-{question}
-
-Answer:
-"""
+Question: {question}"""
 
         response = self.client.responses.create(
             model=self.chat_model,

@@ -178,3 +178,21 @@ These targets should be refined after the baseline evaluation exists:
 - Added catalog summary metrics and duplicate/error feedback to the Streamlit UI.
 - Kept document metadata session-scoped to avoid persisting resume filenames or derived data without user consent.
 - Expanded the automated suite from 17 to 21 tests.
+
+#### Local MVP completion
+
+- Added normalized cosine retrieval, similarity thresholds, ranked citations, and
+  ten-turn document chat history.
+- Expanded the retrieval benchmark to ten document- and chunk-level cases; recorded
+  `Hit@4 = 1.00`, `MRR = 0.883`, and a 335.33x measured warm-cache speedup.
+- Added Pydantic contracts for candidate profiles, jobs, learning plans, interview
+  questions, and rubric feedback.
+- Added a controlled data engineering skill taxonomy and transparent weighted matching.
+- Added synthetic résumé and job-description demo data.
+- Added the Career Match dashboard, four-week learning plans, Interview Lab, scoring,
+  progress history, and JSON export.
+- Added privacy-safe analytics event contracts and partitioned BigQuery table designs.
+- Added bounded OpenAI request timeouts, GitHub Actions, and expanded the offline
+  automated suite to 42 tests.
+- Reached the manual cloud boundary: Google Cloud project, billing alerts, APIs, and
+  owner-selected region must be configured before BigQuery integration.

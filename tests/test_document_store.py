@@ -67,6 +67,35 @@ def test_search_results_preserve_stable_ids():
 
     assert result["document_id"] == chunks[0]["document_id"]
     assert result["chunk_id"] == chunks[0]["chunk_id"]
+    assert result["citation"] == "S1"
+    assert result["rank"] == 1
+    assert result["score"] == 1.0
+
+
+def test_search_applies_minimum_cosine_similarity():
+    client = FakeOpenAIClient()
+    store = DocumentStore(client=client)
+    store.add_chunks(make_chunks())
+
+    assert store.search("unrelated question", top_k=3, min_score=0.25) == []
+
+
+def test_search_validates_configuration():
+    client = FakeOpenAIClient()
+    store = DocumentStore(client=client)
+    store.add_chunks(make_chunks())
+
+    try:
+        store.search("Kafka", top_k=0)
+        raise AssertionError("Expected top_k validation")
+    except ValueError as error:
+        assert "top_k" in str(error)
+
+    try:
+        store.search("Kafka", min_score=2.0)
+        raise AssertionError("Expected min_score validation")
+    except ValueError as error:
+        assert "min_score" in str(error)
 
 
 def test_corpus_id_is_independent_of_chunk_order():

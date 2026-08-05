@@ -2,31 +2,61 @@
   {
     "id": "kafka-consumer-groups",
     "question": "What is a Kafka consumer group and why is it useful?",
-    "expected_file": "kafka_interview_notes.txt"
+    "expected_file": "kafka_interview_notes.txt",
+    "expected_terms": ["consumer group", "parallel"]
   },
   {
     "id": "kafka-offsets",
     "question": "What does an offset represent in Kafka?",
-    "expected_file": "kafka_interview_notes.txt"
+    "expected_file": "kafka_interview_notes.txt",
+    "expected_terms": ["offset", "position"]
   },
   {
     "id": "bigquery-partitioning",
     "question": "How does BigQuery partitioning improve performance and reduce cost?",
-    "expected_file": "gcp_bigquery_notes.txt"
+    "expected_file": "gcp_bigquery_notes.txt",
+    "expected_terms": ["partition", "data scanned"]
   },
   {
     "id": "bigquery-clustering",
     "question": "What is clustering in BigQuery?",
-    "expected_file": "gcp_bigquery_notes.txt"
+    "expected_file": "gcp_bigquery_notes.txt",
+    "expected_terms": ["clustering", "columns"]
   },
   {
     "id": "sql-window-functions",
     "question": "What is a SQL window function used for?",
-    "expected_file": "sql_interview_notes.txt"
+    "expected_file": "sql_interview_notes.txt",
+    "expected_terms": ["window function", "without collapsing"]
   },
   {
     "id": "sql-indexes",
     "question": "How can a database index improve query performance?",
-    "expected_file": "sql_interview_notes.txt"
+    "expected_file": "sql_interview_notes.txt",
+    "expected_terms": ["index", "performance"]
+  },
+  {
+    "id": "kafka-isr",
+    "question": "In Kafka, what does ISR mean and why does it matter for durability?",
+    "expected_file": "kafka_interview_notes.txt",
+    "expected_terms": ["in-sync replicas", "leader"]
+  },
+  {
+    "id": "kafka-acks-all",
+    "question": "What durability guarantee does a Kafka producer get from acks=all?",
+    "expected_file": "kafka_interview_notes.txt",
+    "expected_terms": ["acks=all", "acknowledged"]
+  },
+  {
+    "id": "sql-cte",
+    "question": "What is a SQL CTE and how can it improve a complex query?",
+    "expected_file": "sql_interview_notes.txt",
+    "expected_terms": ["common table expression", "with keyword"]
+  },
+  {
+    "id": "bigquery-external-formats",
+    "question": "How can file formats improve BigQuery external table performance?",
+    "expected_file": "gcp_bigquery_notes.txt",
+    "expected_terms": ["efficient formats", "external tables"]
   }
 ]

@@ -1,125 +1,144 @@
-# Streamlit link : https://olegzas-pro.streamlit.app/
-
 # DataPrep AI
 
-DataPrep AI is a Python web app that helps users prepare for data engineering interviews.
+[Live Streamlit demo](https://olegzas-pro.streamlit.app/)
 
-> V2 is being developed as a Data Engineering Career Intelligence Platform. See the [V2 roadmap](docs/V2_ROADMAP.md).
+DataPrep AI is a data engineering career intelligence platform. It combines
+retrieval-augmented generation (RAG), validated AI extraction, deterministic skill
+matching, and interview coaching in one Python web application.
 
-The app lets users upload interview notes, resumes, job descriptions, SQL notes, Kafka notes, or cloud study guides. It reads the documents, splits them into smaller chunks, creates embeddings, searches for the most useful chunks, and sends that context to OpenAI to generate an interview-focused answer.
+The project began as a class RAG assignment and is being developed into a master's
+application and data engineering portfolio project. Its product goal is simple: help
+data engineers turn their own résumé, target roles, and study material into a focused
+preparation plan.
 
-## Business Use Case
+## What it does
 
-Data engineering candidates often study from many different files and notes. This app helps organize that information in one place. A user can ask questions and get answers based on their own documents.
+### Document Q&A
 
-The target user is someone preparing for a data engineering interview.
+- Reads TXT, Markdown, and PDF documents.
+- Cleans, chunks, hashes, and deduplicates content.
+- Reuses embeddings inside the private browser session.
+- Ranks chunks with normalized cosine similarity and a configurable threshold.
+- Produces answers with visible `[S1]`, `[S2]` source citations and chat history.
+- Reports document status, cache behavior, chunk counts, and latency.
 
-## Main Features
+### Career Match
 
-* Upload TXT, MD, or PDF files
-* Use sample interview notes
-* Ask questions about uploaded documents
-* Retrieve the most relevant document chunks
-* Generate answers using OpenAI
-* Show references used for the answer
-* Ask live market knowledge questions about data engineering topics
-* Reuse unchanged embeddings within a private browser session
-* Assign stable content-based IDs to documents and chunks
-* Display indexing and retrieval timing
-* Catalog document metadata and per-file processing status
-* Skip duplicate content before chunking or embedding
-* Isolate malformed files so one failure does not stop the corpus
+- Extracts schema-validated candidate and job profiles with the OpenAI Responses API.
+- Normalizes skills through a controlled data engineering taxonomy.
+- Calculates a transparent match score: required skills receive weight 2 and
+  preferred skills receive weight 1.
+- Shows résumé and job evidence for every match or gap.
+- Generates a prioritized four-week learning plan.
+- Includes synthetic sample documents so the public demo does not require personal data.
 
-## Tech Stack
+### Interview Lab
 
-* Python
-* Streamlit
-* OpenAI API
-* OpenAI embeddings
-* NumPy
-* PyPDF
-* python-dotenv
-* GitHub
-* Streamlit Community Cloud
+- Creates SQL, Python, data modeling, system design, and behavioral questions.
+- Targets the selected role and supports three difficulty levels.
+- Scores answers on technical accuracy, clarity, tradeoff reasoning, and production
+  readiness using a deterministic 100-point total.
+- Keeps progress in the browser session and exports it as JSON.
 
-## Local Setup
+### Market Knowledge
 
-The verified local runtime is Python 3.13.
+- Uses OpenAI web search for current data engineering tools, skills, and trends.
 
-From PowerShell in the repository root, create the environment:
+## Architecture
+
+```mermaid
+flowchart LR
+    A["Résumé, job descriptions, notes"] --> B["Parse, clean, hash, deduplicate"]
+    B --> C["Chunk and embed"]
+    C --> D["Cosine search + threshold"]
+    D --> E["Cited RAG answers"]
+    B --> F["Validated profile extraction"]
+    F --> G["Taxonomy normalization"]
+    G --> H["Deterministic skill match"]
+    H --> I["Learning plan + Interview Lab"]
+    J["Privacy-safe operational metrics"] -. future .-> K["BigQuery analytics"]
+```
+
+See [the architecture notes](docs/ARCHITECTURE.md) and
+[the V2 roadmap](docs/V2_ROADMAP.md) for design decisions and remaining work.
+
+## Tech stack
+
+- Python 3.13 and Streamlit
+- OpenAI Responses API, structured outputs, embeddings, and web search
+- Pydantic data contracts and NumPy retrieval
+- PyPDF document ingestion
+- Pytest and Streamlit AppTest
+- GitHub Actions
+- BigQuery-ready analytics schemas (cloud integration is the next phase)
+
+## Local setup
+
+From PowerShell in the repository root:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+Copy-Item .env.example .env
 ```
 
-If `python` is not on `PATH`, replace it with the full path to a Python 3.13 executable.
+Add your API key to `.env`; never commit that file. The model defaults in
+`.env.example` can be changed without editing Python.
 
-Create a local `.env` file containing your API key. Do not commit this file:
-
-```text
-OPENAI_API_KEY=your-key-here
-```
-
-Start the application:
+Run the app:
 
 ```powershell
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-## Automated Checks
+Expected result: four tabs named **Document Q&A**, **Career Match**,
+**Interview Lab**, and **Market Knowledge**. In Career Match, leave the synthetic
+sample option selected and click **Analyze career match** for the quickest demo.
 
-Run all unit and application smoke tests:
+## Quality checks
+
+Run the offline automated suite (no API spending):
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest
 ```
 
-The smoke test renders the Streamlit page without calling OpenAI. Tests that use the API are kept separate so routine checks do not spend API credit.
-
-## Retrieval Evaluation
-
-The repository includes a small benchmark that checks whether each question retrieves its expected source document. It reports hit rate at `k` and mean reciprocal rank.
+Run the retrieval benchmark (small embeddings API cost):
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\evaluate_retrieval.py --top-k 3
+.\.venv\Scripts\python.exe scripts\evaluate_retrieval.py --top-k 4 --min-score 0.25 --output evals\retrieval_quality.json
 ```
 
-To save a baseline report:
+The current ten-case benchmark reports `Hit@4 = 1.00` and `MRR = 0.883`.
+Its measured warm pass took 0.048 seconds with zero API calls, compared with
+16.096 seconds for the cold pass—a 335× speedup in that run. GitHub Actions runs
+the offline test suite for every push and pull request.
 
-```powershell
-.\.venv\Scripts\python.exe scripts\evaluate_retrieval.py --top-k 3 --output evals\baseline.json
-```
+## Privacy and cost controls
 
-This command uses the OpenAI embeddings API and therefore has a small API cost. Routine unit tests do not run it.
+- Uploaded content, embeddings, extracted profiles, and interview history remain in
+  the current Streamlit browser session.
+- The user can clear the document index and download interview history.
+- Analytics contracts intentionally exclude document text, file names, answers, and
+  API keys.
+- `.env`, Streamlit secrets, caches, and virtual environments are ignored by Git.
+- OpenAI requests have a configurable 60-second timeout and one retry so failures do
+  not leave the interactive app waiting indefinitely.
+- Public rate limits and a hard cloud budget are still required before a broad launch.
 
-The initial [retrieval baseline](evals/baseline.json) contains six document-level cases. All six expected documents ranked first (`Hit@3 = 1.0`, `MRR = 1.0`), and the uncached run took 19.081 seconds for 45 chunks. Future benchmarks will add harder chunk-level and ambiguous questions.
+## Current boundary
 
-The Day 3 [cached retrieval baseline](evals/cached_baseline.json) runs the same corpus and questions twice in one process:
+The complete local MVP and cloud-ready analytics data model are implemented. The next
+phase requires the repository owner to create a Google Cloud project, attach billing,
+and provide credentials. Follow [GCP setup](docs/GCP_SETUP.md) when ready; no cloud
+resources are required to run or demonstrate the current version.
 
-* Cold pass: 18.512 seconds, 51 embedding API calls
-* Warm pass: 0.078 seconds, 51 cache hits, 0 embedding API calls
-* Measured warm-cache speedup: 237.33x
+## Example demo flow
 
-## Session Cache and Privacy
-
-Document metadata, document-derived embeddings, and question embeddings are retained only in the current Streamlit browser session. They are not written to a shared database or committed to Git. This allows repeated questions to reuse unchanged work without retaining resume-derived data across users.
-
-Changing an uploaded document changes its content ID and refreshes the affected index. The **Clear session document index** button immediately removes the in-session index and cached embeddings.
-
-The document catalog uses content hashes to identify duplicates even when two files have different names. Duplicate files remain visible in the catalog for transparency but do not create repeated chunks or embedding API calls.
-
-
-## Example Questions
-
-```text
-What is a Kafka consumer group?
-What are SQL window functions?
-What is BigQuery partitioning?
-Based on my notes, what interview topics should I study?
-What skills are important for data engineers?
-```
-
-## Future Improvements
-
-In the future, I would like to add saved chat history, better document storage, BigQuery logging, Docker, Cloud Run deployment, and interview quiz scoring.
+1. Open Career Match and analyze the synthetic résumé and job.
+2. Explain the weighted match, evidence table, and missing skills.
+3. Generate the four-week plan.
+4. Open Interview Lab, answer one targeted question, and show rubric feedback.
+5. Open Document Q&A and ask, “How does BigQuery partitioning improve performance?”
+6. Mention the measured retrieval benchmark, session cache, validated schemas, and
+   privacy-safe BigQuery design.

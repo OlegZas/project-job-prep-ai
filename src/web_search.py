@@ -1,12 +1,12 @@
 import os
 
-from openai import OpenAI
+from src.openai_client import create_openai_client
 
 
 class WebSearchAssistant:
-    def __init__(self):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.web_model = os.getenv("OPENAI_WEB_MODEL", "gpt-4o-mini")
+    def __init__(self, client=None):
+        self.client = client or create_openai_client()
+        self.web_model = os.getenv("OPENAI_WEB_MODEL", "gpt-5.6-luna")
 
     def answer_market_question(self, question):
         prompt = f"""
