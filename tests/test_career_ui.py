@@ -1,4 +1,6 @@
 from datetime import datetime, timezone
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from streamlit.testing.v1 import AppTest
 
@@ -91,6 +93,27 @@ def test_career_match_dashboard_renders_from_structured_profiles():
     assert not app.exception
     assert any(metric.value == "50%" for metric in app.metric)
     assert len(app.dataframe) >= 2
+
+
+def test_sample_analysis_stores_profiles_without_widget_key_collision(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    engine = SimpleNamespace(
+        model="test-model",
+        extract_candidate=lambda text, source: candidate_profile(),
+        extract_job=lambda text, source: job_profile(),
+    )
+    app = AppTest.from_file("app.py", default_timeout=20).run()
+    analyze_button = next(
+        button for button in app.button if button.label == "Analyze career match"
+    )
+
+    with patch("src.career_ui.CareerIntelligence", return_value=engine):
+        analyze_button.click().run()
+
+    assert not app.exception
+    assert app.session_state["career_candidate"].headline == "Data Engineer"
+    assert app.session_state["career_jobs"][0].job_title == "Senior Data Engineer"
+    assert any(metric.value == "50%" for metric in app.metric)
 
 
 def test_interview_feedback_and_history_render():

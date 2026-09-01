@@ -73,7 +73,7 @@ def render_career_match():
         "Job descriptions — maximum 3",
         type=["txt", "md", "pdf"],
         accept_multiple_files=True,
-        key="career_jobs",
+        key="career_job_uploads",
     )
 
     resume_file = resume_upload
