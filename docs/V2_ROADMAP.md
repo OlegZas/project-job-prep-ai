@@ -66,19 +66,20 @@ Definition of done: a user can upload one resume and two job descriptions, compa
 
 ### Phase 3: Data engineering and analytics layer
 
-- Define raw, cleaned, and analytical datasets.
-- Add BigQuery tables for documents, skills, matches, pipeline runs, and evaluations.
-- Add SQL or dbt transformations and tests.
-- Add pipeline-run, data-quality, latency, and estimated-cost dashboards.
-- Add a curated, legally usable sample job dataset.
+- [x] Define raw, staging, and analytical datasets.
+- [x] Add incremental DuckDB ingestion for privacy-safe application events.
+- [x] Add SQL transformations and date-partitioned Parquet marts.
+- [x] Add pipeline, retrieval, interview, latency, and cache metrics.
+- [x] Add automated data-quality checks.
+- [x] Add a curated, synthetic résumé and job-description dataset.
 
 Definition of done: the application includes a reproducible analytical pipeline and a visible data-quality/observability story.
 
 ### Phase 4: Cloud and portfolio release
 
-- Add Docker packaging.
-- Add automated tests in GitHub Actions.
-- Deploy a stable public demo to Streamlit Community Cloud or Cloud Run.
+- [x] Add Docker packaging.
+- [x] Add automated tests and a Docker build in GitHub Actions.
+- [x] Deploy a stable public demo to Streamlit Community Cloud.
 - Add rate limits, budget alerts, privacy messaging, and a sample/demo mode.
 - Rewrite the README as a technical case study.
 - Add screenshots, an architecture diagram, evaluation results, and a short demo script.
@@ -196,3 +197,15 @@ These targets should be refined after the baseline evaluation exists:
   automated suite to 42 tests.
 - Reached the manual cloud boundary: Google Cloud project, billing alerts, APIs, and
   owner-selected region must be configured before BigQuery integration.
+
+### 2026-09-19 — Free local analytics release
+
+- Replaced the planned GCP dependency with a free local analytics architecture.
+- Added session-first telemetry to document, career, interview, and market workflows.
+- Added raw JSONL events partitioned by date and incremental DuckDB ingestion keyed by
+  stable event IDs.
+- Added typed SQL staging views and daily pipeline, interview, and retrieval marts.
+- Added partitioned Parquet exports and five automated data-quality checks.
+- Added the Engineering Metrics tab with live session and retrieval metrics.
+- Added a synthetic offline pipeline builder, Docker packaging, and Docker CI.
+- Expanded the automated suite to 46 tests and documented a two-minute portfolio demo.

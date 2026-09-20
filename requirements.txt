@@ -4,3 +4,4 @@ openai==2.52.0
 numpy==2.5.1
 python-dotenv==1.2.2
 pydantic==2.13.4
+duckdb==1.4.1

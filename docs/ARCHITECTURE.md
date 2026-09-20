@@ -34,20 +34,30 @@ Streamlit session state holds indexes, extracted profiles, plans, and interview
 attempts. This supports a useful demo without silently building a résumé database.
 Refreshing or clearing the session removes that transient state.
 
-Future BigQuery records are deliberately operational and aggregate. They contain
+Analytics records are deliberately operational and aggregate. They contain
 counts, timings, model names, statuses, and rubric metrics—not source text, résumé
 content, file names, questions, user answers, or secrets.
+
+The public Streamlit deployment holds events in session state and lets a visitor
+download them. Local mode appends the same event envelopes to date-partitioned JSONL.
+An incremental pipeline inserts unseen event IDs into DuckDB, applies SQL staging and
+mart transformations, runs quality checks, and exports date-partitioned Parquet.
 
 ## Analytics data model
 
 | Record | Grain | Purpose |
 |---|---|---|
-| `pipeline_runs` | One application operation | Reliability, latency, cache efficiency, model usage |
-| `retrieval_evaluations` | One benchmark execution | Retrieval quality and performance regression tracking |
-| `interview_metrics` | One scored attempt | Aggregate learning progress by role family and question type |
+| `raw.events` | One immutable event envelope | Incremental ingestion and lineage back to a source JSONL file |
+| `staging.pipeline_runs` | One application operation | Typed reliability, latency, cache efficiency, and model usage |
+| `staging.retrieval_evaluations` | One benchmark execution | Typed retrieval quality and performance results |
+| `staging.interview_metrics` | One scored attempt | Typed rubric metrics without questions or answers |
+| `marts.pipeline_daily` | One day and operation | Operational dashboard metrics |
+| `marts.interview_progress` | One day, role family, question type, and difficulty | Aggregate practice progress |
+| `marts.retrieval_quality` | One benchmark run | Retrieval quality and cache speedup |
 
-Python contracts are in `src/analytics_models.py`; partitioned and clustered BigQuery
-DDL is in `warehouse/bigquery_schema.sql`.
+Python contracts are in `src/analytics_models.py`, orchestration is in
+`src/analytics_pipeline.py`, and transformations are in `warehouse/sql/transform.sql`.
+The earlier BigQuery DDL remains as an optional future migration path.
 
 ## Deliberate limitations
 
@@ -57,5 +67,7 @@ DDL is in `warehouse/bigquery_schema.sql`.
 - Skill matching checks normalized skill evidence; it is not a hiring recommendation.
 - The benchmark is small and synthetic. More ambiguous, adversarial, and user-tested
   cases are needed before making broad quality claims.
-- Authentication, public rate limits, warehouse writes, and cloud monitoring are not
-  enabled yet.
+- Streamlit Community Cloud does not provide durable local disk, so combined historical
+  analytics are generated locally rather than collected automatically from visitors.
+- Docker is validated by GitHub Actions; a local Docker engine is still required to run
+  the container on a developer machine.

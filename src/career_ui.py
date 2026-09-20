@@ -1,19 +1,33 @@
 import hashlib
 import json
 import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 import streamlit as st
 
+from src.analytics_models import InterviewMetricRecord, PipelineRunRecord
 from src.career_intelligence import CareerIntelligence
 from src.file_loader import DocumentProcessor, LocalFile
 from src.matching import build_skill_match
+from src.telemetry import record_event
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SAMPLE_RESUME = PROJECT_ROOT / "sample_data" / "sample_resume.txt"
 SAMPLE_JOB = PROJECT_ROOT / "sample_data" / "sample_job_description.txt"
+
+
+def _role_family(job_title: str) -> str:
+    lowered = job_title.casefold()
+    if "analytics engineer" in lowered:
+        return "Analytics Engineer"
+    if "machine learning" in lowered or "ml engineer" in lowered:
+        return "Machine Learning Engineer"
+    if "data engineer" in lowered:
+        return "Data Engineer"
+    return "Other Data Role"
 
 
 def _clean_document(file) -> tuple[str, str]:
@@ -94,6 +108,7 @@ def render_career_match():
         elif resume_file is None or not job_files:
             st.warning("Provide one résumé and at least one job description.")
         else:
+            extraction_started_at = time.perf_counter()
             try:
                 engine = CareerIntelligence()
                 with st.status("Extracting structured career data...", expanded=True) as status:
@@ -110,7 +125,30 @@ def render_career_match():
                 st.session_state.career_jobs = jobs
                 st.session_state.career_job_sources = [file.name for file in job_files]
                 st.session_state.career_selected_job = 0
+                record_event(
+                    PipelineRunRecord(
+                        operation="career_extraction",
+                        status="success",
+                        duration_ms=round(
+                            (time.perf_counter() - extraction_started_at) * 1000
+                        ),
+                        input_count=1 + len(job_files),
+                        output_count=1 + len(jobs),
+                        model=engine.model,
+                    )
+                )
             except Exception as error:
+                record_event(
+                    PipelineRunRecord(
+                        operation="career_extraction",
+                        status="error",
+                        duration_ms=round(
+                            (time.perf_counter() - extraction_started_at) * 1000
+                        ),
+                        input_count=1 + len(job_files),
+                        error_type=type(error).__name__,
+                    )
+                )
                 st.error(f"Career extraction failed: {error}")
 
     candidate = st.session_state.get("career_candidate")
@@ -182,12 +220,33 @@ def render_career_match():
         if not os.getenv("OPENAI_API_KEY"):
             st.error("OPENAI_API_KEY is required to generate a plan.")
         else:
+            plan_started_at = time.perf_counter()
             try:
                 with st.spinner("Building a prioritized learning plan..."):
-                    plans[plan_key] = CareerIntelligence().generate_learning_plan(
+                    engine = CareerIntelligence()
+                    plans[plan_key] = engine.generate_learning_plan(
                         candidate, job, match["missing_skills"]
                     )
+                record_event(
+                    PipelineRunRecord(
+                        operation="learning_plan",
+                        status="success",
+                        duration_ms=round((time.perf_counter() - plan_started_at) * 1000),
+                        input_count=len(match["missing_skills"]),
+                        output_count=len(plans[plan_key].weeks),
+                        model=engine.model,
+                    )
+                )
             except Exception as error:
+                record_event(
+                    PipelineRunRecord(
+                        operation="learning_plan",
+                        status="error",
+                        duration_ms=round((time.perf_counter() - plan_started_at) * 1000),
+                        input_count=len(match["missing_skills"]),
+                        error_type=type(error).__name__,
+                    )
+                )
                 st.error(f"Learning-plan generation failed: {error}")
 
     if plan_key in plans:
@@ -217,15 +276,40 @@ def render_interview_lab():
         if not os.getenv("OPENAI_API_KEY"):
             st.error("OPENAI_API_KEY is required to generate a question.")
         else:
+            question_started_at = time.perf_counter()
             try:
                 with st.spinner("Creating a role-specific question..."):
+                    engine = CareerIntelligence()
                     st.session_state.current_interview_question = (
-                        CareerIntelligence().generate_interview_question(
+                        engine.generate_interview_question(
                             candidate, job, question_type, difficulty
                         )
                     )
                     st.session_state.pop("latest_interview_feedback", None)
+                record_event(
+                    PipelineRunRecord(
+                        operation="interview_generation",
+                        status="success",
+                        duration_ms=round(
+                            (time.perf_counter() - question_started_at) * 1000
+                        ),
+                        input_count=1,
+                        output_count=1,
+                        model=engine.model,
+                    )
+                )
             except Exception as error:
+                record_event(
+                    PipelineRunRecord(
+                        operation="interview_generation",
+                        status="error",
+                        duration_ms=round(
+                            (time.perf_counter() - question_started_at) * 1000
+                        ),
+                        input_count=1,
+                        error_type=type(error).__name__,
+                    )
+                )
                 st.error(f"Question generation failed: {error}")
 
     question = st.session_state.get("current_interview_question")
@@ -252,9 +336,11 @@ def render_interview_lab():
         if len(answer.strip()) < 20:
             st.warning("Write a more complete answer before requesting feedback.")
         else:
+            scoring_started_at = time.perf_counter()
             try:
                 with st.spinner("Scoring against the interview rubric..."):
-                    feedback = CareerIntelligence().score_interview_answer(
+                    engine = CareerIntelligence()
+                    feedback = engine.score_interview_answer(
                         question, answer.strip()
                     )
                 st.session_state.latest_interview_feedback = feedback
@@ -270,7 +356,42 @@ def render_interview_lab():
                         **feedback.model_dump(mode="json"),
                     }
                 )
+                record_event(
+                    PipelineRunRecord(
+                        operation="interview_scoring",
+                        status="success",
+                        duration_ms=round(
+                            (time.perf_counter() - scoring_started_at) * 1000
+                        ),
+                        input_count=1,
+                        output_count=1,
+                        model=engine.model,
+                    )
+                )
+                record_event(
+                    InterviewMetricRecord(
+                        role_family=_role_family(job.job_title),
+                        question_type=question.question_type,
+                        difficulty=question.difficulty,
+                        score=feedback.score,
+                        technical_accuracy=feedback.technical_accuracy,
+                        clarity=feedback.clarity,
+                        tradeoff_reasoning=feedback.tradeoff_reasoning,
+                        production_readiness=feedback.production_readiness,
+                    )
+                )
             except Exception as error:
+                record_event(
+                    PipelineRunRecord(
+                        operation="interview_scoring",
+                        status="error",
+                        duration_ms=round(
+                            (time.perf_counter() - scoring_started_at) * 1000
+                        ),
+                        input_count=1,
+                        error_type=type(error).__name__,
+                    )
+                )
                 st.error(f"Answer scoring failed: {error}")
 
     feedback = st.session_state.get("latest_interview_feedback")

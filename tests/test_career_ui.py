@@ -139,4 +139,6 @@ def test_interview_feedback_and_history_render():
 
     assert not app.exception
     assert any(metric.value == "70/100" for metric in app.metric)
-    assert len(app.download_button) == 1
+    assert any(
+        button.label == "Download session history" for button in app.download_button
+    )

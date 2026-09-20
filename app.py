@@ -4,10 +4,13 @@ import time
 import streamlit as st
 from dotenv import load_dotenv
 
+from src.analytics_models import PipelineRunRecord
+from src.analytics_ui import render_engineering_metrics
 from src.career_ui import render_career_match, render_interview_lab
 from src.file_loader import DocumentProcessor
 from src.document_store import DocumentStore
 from src.rag_pipeline import RAGPipeline
+from src.telemetry import record_event
 from src.web_search import WebSearchAssistant
 
 load_dotenv()
@@ -41,8 +44,14 @@ st.write(
 
 st.divider()
 
-tab1, tab2, tab3, tab4 = st.tabs(
-    ["Document Q&A", "Career Match", "Interview Lab", "Market Knowledge"]
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    [
+        "Document Q&A",
+        "Career Match",
+        "Interview Lab",
+        "Market Knowledge",
+        "Engineering Metrics",
+    ]
 )
 
 
@@ -216,6 +225,8 @@ with tab1:
         elif not doc_question.strip():
             st.warning("Please enter a question.")
         else:
+            active_operation = "document_index"
+            operation_started_at = time.perf_counter()
             try:
                 corpus_id = DocumentStore.create_corpus_id(chunks)
                 desired_model = os.getenv(
@@ -248,8 +259,22 @@ with tab1:
                         }
 
                 index_seconds = time.perf_counter() - index_started_at
+                record_event(
+                    PipelineRunRecord(
+                        operation="document_index",
+                        status="success",
+                        duration_ms=round(index_seconds * 1000),
+                        input_count=len(chunks),
+                        output_count=len(store.items),
+                        cache_hits=index_stats["hits"],
+                        cache_misses=index_stats["misses"],
+                        model=store.embedding_model,
+                    )
+                )
 
                 store.reset_cache_stats()
+                active_operation = "document_search"
+                operation_started_at = time.perf_counter()
                 search_started_at = time.perf_counter()
 
                 with st.spinner("Searching your documents..."):
@@ -259,6 +284,18 @@ with tab1:
 
                 search_seconds = time.perf_counter() - search_started_at
                 search_stats = store.get_cache_stats()
+                record_event(
+                    PipelineRunRecord(
+                        operation="document_search",
+                        status="success" if results else "no_result",
+                        duration_ms=round(search_seconds * 1000),
+                        input_count=1,
+                        output_count=len(results),
+                        cache_hits=search_stats["hits"],
+                        cache_misses=search_stats["misses"],
+                        model=store.embedding_model,
+                    )
+                )
 
                 if index_reused:
                     st.success(
@@ -307,6 +344,16 @@ with tab1:
                     st.rerun()
 
             except Exception as error:
+                record_event(
+                    PipelineRunRecord(
+                        operation=active_operation,
+                        status="error",
+                        duration_ms=round(
+                            (time.perf_counter() - operation_started_at) * 1000
+                        ),
+                        error_type=type(error).__name__,
+                    )
+                )
                 st.error("Something went wrong while generating the document answer.")
                 st.write(error)
 
@@ -351,6 +398,7 @@ with tab4:
         elif not market_question.strip():
             st.warning("Please enter a question.")
         else:
+            market_started_at = time.perf_counter()
             try:
                 with st.spinner("Searching the web and generating answer..."):
                     web_assistant = WebSearchAssistant()
@@ -358,10 +406,38 @@ with tab4:
 
                 st.write("### Answer")
                 st.write(market_answer)
+                record_event(
+                    PipelineRunRecord(
+                        operation="market_knowledge",
+                        status="success",
+                        duration_ms=round(
+                            (time.perf_counter() - market_started_at) * 1000
+                        ),
+                        input_count=1,
+                        output_count=1,
+                        model=os.getenv("OPENAI_WEB_MODEL", "gpt-5.6-luna"),
+                    )
+                )
 
             except Exception as error:
+                record_event(
+                    PipelineRunRecord(
+                        operation="market_knowledge",
+                        status="error",
+                        duration_ms=round(
+                            (time.perf_counter() - market_started_at) * 1000
+                        ),
+                        input_count=1,
+                        error_type=type(error).__name__,
+                        model=os.getenv("OPENAI_WEB_MODEL", "gpt-5.6-luna"),
+                    )
+                )
                 st.error("Something went wrong while generating the market knowledge answer.")
                 st.write(error)
+
+
+with tab5:
+    render_engineering_metrics()
 
 
 st.divider()

@@ -26,6 +26,7 @@ class PipelineRunRecord(BaseModel):
         "learning_plan",
         "interview_generation",
         "interview_scoring",
+        "market_knowledge",
     ]
     status: Literal["success", "no_result", "error"]
     duration_ms: int = Field(ge=0)

@@ -11,6 +11,7 @@ def test_app_renders_without_exceptions():
         "Career Match",
         "Interview Lab",
         "Market Knowledge",
+        "Engineering Metrics",
     ]
     assert len(app.dataframe) == 1
     assert len(app.dataframe[0].value) == 3
