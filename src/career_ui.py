@@ -12,6 +12,7 @@ from src.career_intelligence import CareerIntelligence
 from src.file_loader import DocumentProcessor, LocalFile
 from src.matching import build_skill_match
 from src.telemetry import record_event
+from src.ui_components import render_section_intro
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -70,21 +71,28 @@ def _render_learning_plan(plan):
 
 
 def render_career_match():
-    st.header("Career Match Intelligence")
-    st.write(
-        "Compare a résumé with up to three job descriptions. The AI extracts "
-        "schema-validated skills and evidence; the match score itself is calculated "
-        "with transparent deterministic rules."
+    st.header("Compare your résumé with a job")
+    render_section_intro(
+        "What you will get",
+        "See which job requirements your résumé already supports, what appears to be "
+        "missing, and what to study next. Every result includes evidence you can review.",
     )
+    st.markdown("**How to use it:** 1. Add one résumé  →  2. Add up to three jobs  →  3. Select **Compare résumé and job**")
+    st.caption("No files ready? Keep the sample option selected to see a complete example.")
 
-    use_sample = st.checkbox("Use synthetic sample résumé and job", value=True)
+    use_sample = st.checkbox(
+        "Use a safe sample résumé and job posting",
+        value=True,
+        help="Recommended for your first visit. The sample contains no personal information.",
+    )
     resume_upload = st.file_uploader(
-        "Résumé (TXT, MD, or PDF)",
+        "Your résumé",
         type=["txt", "md", "pdf"],
         key="career_resume",
+        help="Accepted formats: TXT, Markdown, and PDF.",
     )
     job_uploads = st.file_uploader(
-        "Job descriptions — maximum 3",
+        "Job posting(s) - up to 3",
         type=["txt", "md", "pdf"],
         accept_multiple_files=True,
         key="career_job_uploads",
@@ -102,7 +110,7 @@ def render_career_match():
         st.warning("Only the first three job descriptions will be analyzed.")
         job_files = job_files[:3]
 
-    if st.button("Analyze career match", type="primary"):
+    if st.button("Compare résumé and job", type="primary"):
         if not os.getenv("OPENAI_API_KEY"):
             st.error("OPENAI_API_KEY is required for structured career extraction.")
         elif resume_file is None or not job_files:
@@ -111,15 +119,15 @@ def render_career_match():
             extraction_started_at = time.perf_counter()
             try:
                 engine = CareerIntelligence()
-                with st.status("Extracting structured career data...", expanded=True) as status:
-                    st.write(f"Analyzing résumé: {resume_file.name}")
+                with st.status("Reading your résumé and job posting...", expanded=True) as status:
+                    st.write(f"Reading résumé: {resume_file.name}")
                     candidate = _extract_with_cache(engine, "candidate", resume_file)
                     jobs = []
                     for job_file in job_files:
-                        st.write(f"Analyzing job: {job_file.name}")
+                        st.write(f"Reading job: {job_file.name}")
                         job = _extract_with_cache(engine, "job", job_file)
                         jobs.append(job)
-                    status.update(label="Career analysis complete", state="complete")
+                    status.update(label="Your comparison is ready", state="complete")
 
                 st.session_state.career_candidate = candidate
                 st.session_state.career_jobs = jobs
@@ -155,14 +163,14 @@ def render_career_match():
     jobs = st.session_state.get("career_jobs", [])
 
     if candidate is None or not jobs:
-        st.info("Analyze the sample documents or upload your own files to see the match dashboard.")
+        st.info("Select the sample or upload your files, then choose Compare résumé and job.")
         return
 
     job_labels = [
         f"{job.job_title} — {job.company or 'Company not listed'}" for job in jobs
     ]
     selected_index = st.selectbox(
-        "Compare against",
+        "Job to review",
         range(len(jobs)),
         format_func=lambda index: job_labels[index],
         key="career_selected_job",
@@ -174,21 +182,26 @@ def render_career_match():
 
     st.subheader(job_labels[selected_index])
     metric1, metric2, metric3, metric4 = st.columns(4)
-    metric1.metric("Weighted match", f"{match['score']}%")
+    metric1.metric("Overall match", f"{match['score']}%")
     metric2.metric(
         "Required skills", f"{match['required_matched']}/{match['required_total']}"
     )
     metric3.metric(
         "Preferred skills", f"{match['preferred_matched']}/{match['preferred_total']}"
     )
-    metric4.metric("Priority gaps", len(match["missing_skills"]))
+    metric4.metric("Skills to strengthen", len(match["missing_skills"]))
+
+    st.caption(
+        "How the score works: required skills count twice as much as preferred skills. "
+        "The score is calculated with fixed rules so it is easy to explain and reproduce."
+    )
 
     match_rows = [
         {
             "Skill": row["skill"],
             "Category": row["category"],
-            "Importance": row["importance"].title(),
-            "Status": row["status"].title(),
+            "Job priority": row["importance"].title(),
+            "Your coverage": row["status"].replace("missing", "Not shown").replace("matched", "Found").title(),
             "Résumé evidence": "; ".join(row["candidate_evidence"]) or "—",
             "Job evidence": "; ".join(row["job_evidence"]) or "—",
         }
@@ -197,7 +210,7 @@ def render_career_match():
     st.dataframe(match_rows, width="stretch", hide_index=True)
 
     if match["category_summary"]:
-        st.write("### Coverage by skill category")
+        st.write("### Skills covered by category")
         st.bar_chart(
             match["category_summary"],
             x="category",
@@ -205,14 +218,15 @@ def render_career_match():
             color=["#16a34a", "#94a3b8"],
         )
 
-    with st.expander("Inspect extracted structured profiles"):
+    with st.expander("Technical details: extracted profiles"):
         profile_col1, profile_col2 = st.columns(2)
         profile_col1.write("**Candidate profile**")
         profile_col1.json(candidate.model_dump(mode="json"))
         profile_col2.write("**Job profile**")
         profile_col2.json(job.model_dump(mode="json"))
 
-    st.write("### Personalized learning plan")
+    st.write("### Build your four-week learning plan")
+    st.caption("The plan focuses first on important skills that were not clearly shown in the résumé.")
     plan_key = f"{candidate.headline}:{job.job_title}:{','.join(match['missing_skills'])}"
     plans = st.session_state.setdefault("learning_plans", {})
 
@@ -254,25 +268,31 @@ def render_career_match():
 
 
 def render_interview_lab():
-    st.header("Role-Specific Interview Lab")
+    st.header("Practice an interview for your target role")
+    render_section_intro(
+        "Practice, answer, improve",
+        "Choose a topic and difficulty. DataPrep AI creates a role-focused question, "
+        "then gives clear feedback on your answer.",
+    )
     candidate = st.session_state.get("career_candidate")
     job = st.session_state.get("current_job")
 
     if candidate is None or job is None:
-        st.info("Complete a Career Match analysis first so questions can target the selected role.")
+        st.info("First open Resume & Job Match and complete a comparison. Then come back here for a question tailored to that role.")
         return
 
-    st.caption(f"Target role: {job.job_title} | Candidate: {candidate.headline}")
+    st.success(f"Practice role: {job.job_title}")
     control1, control2 = st.columns(2)
     question_type = control1.selectbox(
         "Question type",
         ["SQL", "Python", "Data Modeling", "System Design", "Behavioral"],
     )
     difficulty = control2.selectbox(
-        "Difficulty", ["Foundational", "Intermediate", "Advanced"], index=1
+        "Difficulty", ["Foundational", "Intermediate", "Advanced"], index=1,
+        help="Foundational checks core knowledge. Advanced expects tradeoffs and production-level reasoning.",
     )
 
-    if st.button("Generate interview question", type="primary"):
+    if st.button("Create a practice question", type="primary"):
         if not os.getenv("OPENAI_API_KEY"):
             st.error("OPENAI_API_KEY is required to generate a question.")
         else:
@@ -322,17 +342,17 @@ def render_interview_lab():
     if question.context:
         st.caption(question.context)
 
-    with st.expander("What the interviewer will evaluate"):
+    with st.expander("What a strong answer should cover"):
         for criterion in question.evaluation_criteria:
             st.write(f"- {criterion}")
 
     answer = st.text_area(
-        "Your answer",
+        "Your practice answer",
         height=180,
         placeholder="Explain your reasoning, tradeoffs, and production considerations...",
     )
 
-    if st.button("Score my answer"):
+    if st.button("Get feedback on my answer", type="primary"):
         if len(answer.strip()) < 20:
             st.warning("Write a more complete answer before requesting feedback.")
         else:

@@ -104,7 +104,7 @@ def test_sample_analysis_stores_profiles_without_widget_key_collision(monkeypatc
     )
     app = AppTest.from_file("app.py", default_timeout=20).run()
     analyze_button = next(
-        button for button in app.button if button.label == "Analyze career match"
+        button for button in app.button if button.label == "Compare résumé and job"
     )
 
     with patch("src.career_ui.CareerIntelligence", return_value=engine):

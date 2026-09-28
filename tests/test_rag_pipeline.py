@@ -31,3 +31,5 @@ def test_rag_pipeline_labels_context_and_returns_cited_answer():
     prompt = client.responses.calls[0]["input"]
     assert "[S1] notes.txt - chunk 2" in prompt
     assert "Use only the supplied sources" in prompt
+    assert "make practical inferences" in prompt
+    assert "never invent experience" in prompt

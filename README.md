@@ -13,7 +13,7 @@ preparation plan.
 
 ## What it does
 
-### Document Q&A
+### Ask My Documents
 
 - Reads TXT, Markdown, and PDF documents.
 - Cleans, chunks, hashes, and deduplicates content.
@@ -22,7 +22,7 @@ preparation plan.
 - Produces answers with visible `[S1]`, `[S2]` source citations and chat history.
 - Reports document status, cache behavior, chunk counts, and latency.
 
-### Career Match
+### Resume & Job Match
 
 - Extracts schema-validated candidate and job profiles with the OpenAI Responses API.
 - Normalizes skills through a controlled data engineering taxonomy.
@@ -32,7 +32,7 @@ preparation plan.
 - Generates a prioritized four-week learning plan.
 - Includes synthetic sample documents so the public demo does not require personal data.
 
-### Interview Lab
+### Practice Interview
 
 - Creates SQL, Python, data modeling, system design, and behavioral questions.
 - Targets the selected role and supports three difficulty levels.
@@ -40,11 +40,11 @@ preparation plan.
   readiness using a deterministic 100-point total.
 - Keeps progress in the browser session and exports it as JSON.
 
-### Market Knowledge
+### Current Trends
 
 - Uses OpenAI web search for current data engineering tools, skills, and trends.
 
-### Engineering Metrics
+### Project Metrics
 
 - Captures privacy-safe application operations in the active browser session.
 - Supports persistent local ingestion into raw date-partitioned JSONL.
@@ -105,10 +105,10 @@ Run the app:
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-Expected result: five tabs named **Document Q&A**, **Career Match**,
-**Interview Lab**, **Market Knowledge**, and **Engineering Metrics**. In Career Match,
-leave the synthetic sample option selected and click **Analyze career match** for the
-quickest demo.
+Expected result: five tabs named **Ask My Documents**, **Resume & Job Match**,
+**Practice Interview**, **Current Trends**, and **Project Metrics**. In Resume & Job
+Match, leave the safe sample option selected and click **Compare résumé and job** for
+the quickest demo.
 
 ## Local analytics pipeline
 
@@ -120,8 +120,8 @@ DATAPREP_ANALYTICS_MODE=local
 DATAPREP_ANALYTICS_DIR=data/analytics
 ```
 
-Restart the app, use its features, then open **Engineering Metrics** and click
-**Run incremental DuckDB pipeline**. The application creates:
+Restart the app, use its features, then open **Project Metrics** and click
+**Update the local analytics database**. The application creates:
 
 ```text
 data/analytics/
@@ -191,12 +191,12 @@ every push and pull request.
 
 ## Example demo flow
 
-1. Open Career Match and analyze the synthetic résumé and job.
+1. Open Resume & Job Match and analyze the synthetic résumé and job.
 2. Explain the weighted match, evidence table, and missing skills.
 3. Generate the four-week plan.
-4. Open Interview Lab, answer one targeted question, and show rubric feedback.
-5. Open Document Q&A and ask, “How does BigQuery partitioning improve performance?”
-6. Open Engineering Metrics and show the retrieval benchmark and session operations.
+4. Open Practice Interview, answer one targeted question, and show rubric feedback.
+5. Open Ask My Documents and ask, “How does BigQuery partitioning improve performance?”
+6. Open Project Metrics and show the retrieval benchmark and session operations.
 7. Mention the DuckDB pipeline, SQL marts, partitioned Parquet, quality checks,
    container build, and automated CI.
 

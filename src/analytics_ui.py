@@ -6,6 +6,7 @@ import streamlit as st
 
 from src.analytics_pipeline import AnalyticsPipeline
 from src.telemetry import analytics_mode, export_events, session_events, summarize_session
+from src.ui_components import render_section_intro
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -35,43 +36,43 @@ def _render_retrieval_quality():
     report = json.loads(RETRIEVAL_REPORT.read_text(encoding="utf-8"))
     cold = report["cold_run"]
     warm = report["warm_run"]
-    st.write("### Retrieval evaluation")
+    st.write("### Document answer quality check")
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric(f"Hit@{report['top_k']}", f"{cold['hit_rate']:.0%}")
-    col2.metric("MRR", f"{cold['mean_reciprocal_rank']:.3f}")
-    col3.metric("Cold run", f"{cold['duration_seconds']:.3f}s")
-    col4.metric("Warm speedup", f"{report['warm_speedup']:.1f}×")
+    col1.metric("Useful source found", f"{cold['hit_rate']:.0%}")
+    col2.metric("Average source rank", f"{cold['mean_reciprocal_rank']:.3f}")
+    col3.metric("First run", f"{cold['duration_seconds']:.3f}s")
+    col4.metric("Cached speedup", f"{report['warm_speedup']:.1f}×")
     st.caption(
-        f"{cold['case_count']} labeled cases, {report['chunk_count']} chunks, "
-        f"minimum similarity {report['min_score']}. The warm run made "
-        f"{warm['embedding_cache']['misses']} embedding API calls."
+        f"Tested with {cold['case_count']} prepared questions across "
+        f"{report['chunk_count']} document sections. A technical report is available "
+        "in the GitHub repository."
     )
 
 
 def render_engineering_metrics():
-    st.header("Engineering Metrics")
-    st.write(
-        "Operational events stay in this browser session on the public app. Local mode "
-        "can persist the same privacy-safe records through raw JSONL, DuckDB SQL marts, "
-        "and partitioned Parquet files."
+    st.header("See how the application is performing")
+    render_section_intro(
+        "A transparent look behind the scenes",
+        "This page shows speed, success, caching, and retrieval quality. It records "
+        "operational numbers only - not your résumé text, questions, answers, or name.",
     )
 
     events = session_events()
     summary = summarize_session(events)
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Session operations", summary["operation_count"])
+    col1.metric("Actions this session", summary["operation_count"])
     col2.metric(
         "Success rate",
         f"{summary['success_rate']:.1f}%" if summary["success_rate"] is not None else "—",
     )
     col3.metric(
-        "Average latency",
+        "Average response time",
         f"{summary['average_duration_ms']:.0f} ms"
         if summary["average_duration_ms"] is not None
         else "—",
     )
     col4.metric(
-        "Cache hit rate",
+        "Reused work",
         f"{summary['cache_hit_percent']:.1f}%"
         if summary["cache_hit_percent"] is not None
         else "—",
@@ -79,10 +80,10 @@ def render_engineering_metrics():
 
     rows = _pipeline_rows(events)
     if rows:
-        st.write("### Current session pipeline runs")
+        st.write("### Recent application actions")
         st.dataframe(rows, width="stretch", hide_index=True)
     else:
-        st.info("Use another tab to create session pipeline metrics.")
+        st.info("Use another tab first. Your application activity will appear here.")
 
     if summary["interview_attempts"]:
         interview1, interview2 = st.columns(2)
@@ -92,7 +93,7 @@ def render_engineering_metrics():
         )
 
     st.download_button(
-        "Download privacy-safe session events",
+        "Download session performance data",
         data=export_events(events),
         file_name="dataprep_analytics_events.json",
         mime="application/json",
@@ -101,10 +102,10 @@ def render_engineering_metrics():
 
     _render_retrieval_quality()
 
-    st.write("### Local analytical pipeline")
+    st.write("### Data engineering pipeline")
     if analytics_mode() == "local":
-        st.success("Local persistence is enabled for this process.")
-        if st.button("Run incremental DuckDB pipeline"):
+        st.success("Local storage is enabled for this process.")
+        if st.button("Update the local analytics database"):
             try:
                 with st.spinner("Ingesting events and rebuilding analytical marts..."):
                     result = AnalyticsPipeline().run()
@@ -121,12 +122,9 @@ def render_engineering_metrics():
             st.dataframe(result["quality_checks"], width="stretch", hide_index=True)
             st.caption(f"DuckDB: {result['database_path']}")
     else:
-        st.info(
-            "Public session mode is active. For persistent local analytics, set "
-            "DATAPREP_ANALYTICS_MODE=local in .env and restart the app."
-        )
+        st.info("The public app keeps metrics only for your current browser session. The local version can build a persistent DuckDB and Parquet analytics pipeline.")
 
-    with st.expander("Data model and privacy boundary"):
+    with st.expander("Technical details: data flow and privacy"):
         st.code(
             "Application events → partitioned JSONL → DuckDB staging views → "
             "daily analytical marts → partitioned Parquet",

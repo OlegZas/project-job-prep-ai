@@ -26,10 +26,15 @@ class RAGPipeline:
     def answer_question(self, question, search_results):
         context = self.build_context(search_results)
 
-        prompt = f"""Answer as a data engineering interview coach.
+        prompt = f"""Answer as a helpful data engineering career coach.
 Use only the supplied sources. Cite factual claims with [S1], [S2], and so on.
-If the sources do not answer the question, say exactly: "I don't know based on the uploaded documents."
-Be practical and concise.
+For recommendation questions, make practical inferences from facts that are explicitly
+present in the sources. For example, when asked what to prepare based on a resume,
+connect its listed tools, projects, and responsibilities to likely interview topics.
+Clearly phrase these as recommendations, and never invent experience or qualifications.
+If the sources contain no useful evidence for the question, say exactly:
+"I couldn't find enough information in these documents to answer that."
+Use plain language, organize longer answers with short bullets, and be concise.
 
 Sources:
 {context}
