@@ -15,7 +15,7 @@ preparation plan.
 
 ### Ask My Documents
 
-- Reads TXT, Markdown, and PDF documents.
+- Reads Word (.docx), PDF, TXT, and Markdown documents.
 - Cleans, chunks, hashes, and deduplicates content.
 - Reuses embeddings inside the private browser session.
 - Ranks chunks with normalized cosine similarity and a configurable threshold.
@@ -25,7 +25,8 @@ preparation plan.
 ### Resume & Job Match
 
 - Extracts schema-validated candidate and job profiles with the OpenAI Responses API.
-- Normalizes skills through a controlled data engineering taxonomy.
+- Normalizes atomic skills through a controlled data engineering taxonomy and matches
+  named alternatives and broader capability requirements to résumé evidence.
 - Calculates a transparent match score: required skills receive weight 2 and
   preferred skills receive weight 1.
 - Shows résumé and job evidence for every match or gap.
@@ -80,7 +81,7 @@ See [the architecture notes](docs/ARCHITECTURE.md) and
 - Python 3.13 and Streamlit
 - OpenAI Responses API, structured outputs, embeddings, and web search
 - Pydantic data contracts and NumPy retrieval
-- PyPDF document ingestion
+- PyPDF and python-docx document ingestion
 - DuckDB, SQL, JSONL, and Parquet analytics
 - Pytest and Streamlit AppTest
 - GitHub Actions
@@ -191,13 +192,14 @@ every push and pull request.
 
 ## Example demo flow
 
-1. Open Resume & Job Match and analyze the synthetic résumé and job.
-2. Explain the weighted match, evidence table, and missing skills.
-3. Generate the four-week plan.
-4. Open Practice Interview, answer one targeted question, and show rubric feedback.
-5. Open Ask My Documents and ask, “How does BigQuery partitioning improve performance?”
-6. Open Project Metrics and show the retrieval benchmark and session operations.
-7. Mention the DuckDB pipeline, SQL marts, partitioned Parquet, quality checks,
-   container build, and automated CI.
+1. Introduce the product, stack, and responsible use of an AI coding assistant.
+2. Give a brief landing-page overview and explain the five tabs.
+3. Upload Word, PDF, or TXT documents in Ask My Documents and show a cited answer.
+4. Compare a résumé with a job, explain structured extraction and deterministic
+   matching, and generate the concise four-week plan.
+5. Generate a personalized Practice Interview question and show feedback.
+6. Ask Current Trends how AI is affecting data engineering careers and job searches.
+7. Explain the session metrics, retrieval benchmark, privacy boundaries, and local
+   DuckDB and Parquet pipeline.
 
 The complete recording outline is in [the demo script](docs/DEMO_SCRIPT.md).

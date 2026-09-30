@@ -4,6 +4,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
+from docx import Document
 from pypdf import PdfReader
 
 
@@ -17,7 +18,7 @@ class LocalFile:
 
 
 class DocumentProcessor:
-    supported_extensions = {".txt", ".md", ".pdf"}
+    supported_extensions = {".txt", ".md", ".pdf", ".docx"}
 
     def __init__(self, chunk_size=180, overlap=30):
         if chunk_size <= 0:
@@ -38,7 +39,7 @@ class DocumentProcessor:
         if not folder.exists():
             return []
 
-        extensions = allowed_extensions or {".txt", ".md", ".pdf"}
+        extensions = allowed_extensions or self.supported_extensions
         extensions = {extension.lower() for extension in extensions}
         files = []
 
@@ -56,6 +57,9 @@ class DocumentProcessor:
 
         if file_name.endswith(".pdf"):
             return self.read_pdf(file_bytes)
+
+        if file_name.endswith(".docx"):
+            return self.read_docx(file_bytes)
 
         if file_name.endswith(".txt") or file_name.endswith(".md"):
             return self.read_text(file_bytes)
@@ -97,6 +101,18 @@ class DocumentProcessor:
                 text += page_text + "\n"
 
         return text
+
+    def read_docx(self, file_bytes):
+        document = Document(io.BytesIO(file_bytes))
+        blocks = [paragraph.text for paragraph in document.paragraphs if paragraph.text.strip()]
+
+        for table in document.tables:
+            for row in table.rows:
+                cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                if cells:
+                    blocks.append(" | ".join(cells))
+
+        return "\n".join(blocks)
 
     def clean_text(self, text):
         text = text.replace("\n", " ")

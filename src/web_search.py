@@ -29,6 +29,9 @@ Focus on:
 
 Keep the answer practical and useful for someone preparing for data engineering interviews.
 If the topic is current or changing, mention that trends can change over time.
+Lead with a direct answer in plain language. Prefer two or three short paragraphs.
+Use no more than three bullets, avoid jargon where possible, and end with one practical
+next step for the user.
 
 User question:
 {question}

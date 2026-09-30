@@ -90,3 +90,78 @@ def test_duplicate_job_skill_prefers_required_importance():
     bigquery_rows = [row for row in result["rows"] if row["skill"] == "BigQuery"]
     assert len(bigquery_rows) == 1
     assert bigquery_rows[0]["importance"] == "required"
+
+
+def test_broad_job_requirements_match_named_resume_evidence():
+    candidate = CandidateProfile(
+        candidate_name="Oleg",
+        headline="Data Engineer",
+        target_roles=["Data Engineer"],
+        skills=[
+            CandidateSkill(name="Python", category="Languages", proficiency="advanced", years_experience=None, evidence=["Built Python pipelines"]),
+            CandidateSkill(name="SQL", category="Languages", proficiency="advanced", years_experience=None, evidence=["Developed SQL transformations"]),
+            CandidateSkill(name="GCP", category="Cloud", proficiency="intermediate", years_experience=None, evidence=["Designed workflows on Google Cloud"]),
+            CandidateSkill(name="BigQuery", category="Warehouses & Platforms", proficiency="intermediate", years_experience=None, evidence=["Built BigQuery tables"]),
+            CandidateSkill(name="Airflow", category="Orchestration", proficiency="intermediate", years_experience=None, evidence=["Orchestrated Airflow jobs"]),
+        ],
+        achievements=[
+            "Build and maintain production data pipelines and reporting workflows.",
+            "Completed intensive data engineering training.",
+        ],
+    )
+    job = JobProfile(
+        job_title="Data Engineer",
+        company="Slalom",
+        seniority="Mid-level",
+        skills=[
+            JobSkill(
+                name="Programming with SQL, Python, Java, or Scala",
+                category="Other",
+                importance="required",
+                evidence=["Proficiency in programming languages such as SQL, Python, Java or Scala."],
+            ),
+            JobSkill(
+                name="Cloud or data platform experience",
+                category="Other",
+                importance="required",
+                evidence=["Experience with AWS, Azure, GCP, Databricks, or Snowflake."],
+            ),
+            JobSkill(
+                name="Production data engineering experience",
+                category="Other",
+                importance="required",
+                evidence=["Build, deploy, or support production data engineering solutions."],
+            ),
+            JobSkill(
+                name="Learning mindset",
+                category="Other",
+                importance="preferred",
+                evidence=["A growth-oriented mindset and willingness to learn."],
+            ),
+        ],
+        responsibilities=["Build reliable data platforms"],
+    )
+
+    result = build_skill_match(candidate, job)
+
+    assert result["score"] == 100
+    assert result["required_matched"] == 3
+    assert result["preferred_matched"] == 1
+    assert all(row["candidate_evidence"] for row in result["rows"])
+
+
+def test_unproven_consulting_requirement_stays_missing():
+    job = make_job()
+    job.skills = [
+        JobSkill(
+            name="Consulting or client-facing delivery",
+            category="Professional Skills",
+            importance="required",
+            evidence=["Experience in consulting or client-facing teams."],
+        )
+    ]
+
+    result = build_skill_match(make_candidate(), job)
+
+    assert result["score"] == 0
+    assert result["missing_skills"] == ["Consulting or client-facing delivery"]

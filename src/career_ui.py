@@ -41,7 +41,9 @@ def _clean_document(file) -> tuple[str, str]:
 def _extract_with_cache(engine, kind, file):
     text, document_id = _clean_document(file)
     cache = st.session_state.setdefault("career_extraction_cache", {})
-    cache_key = f"{kind}:{engine.model}:{document_id}"
+    cache_key = (
+        f"{kind}:{engine.model}:{getattr(engine, 'extraction_version', 'v1')}:{document_id}"
+    )
 
     if cache_key not in cache:
         if kind == "candidate":
@@ -53,21 +55,22 @@ def _extract_with_cache(engine, kind, file):
 
 
 def _render_learning_plan(plan):
-    st.write(f"**Strategy:** {plan.strategy}")
-    st.caption(f"Success metric: {plan.success_metric}")
+    st.write("#### Your four-week goal")
+    st.write(plan.strategy)
+    st.info(f"**A good result after four weeks:** {plan.success_metric}")
 
     for week in plan.weeks:
+        focus = ", ".join(week.focus_skills[:3])
         with st.expander(
-            f"Week {week.week_number}: {', '.join(week.focus_skills)}",
+            f"Week {week.week_number} — {focus}",
             expanded=week.week_number == 1,
         ):
-            st.write("**Objectives**")
-            for objective in week.objectives:
-                st.write(f"- {objective}")
-            st.write(f"**Practical task:** {week.practical_task}")
-            st.write("**Practice questions**")
-            for question in week.interview_questions:
-                st.write(f"- {question}")
+            st.write("**What to learn**")
+            st.write("  •  ".join(week.objectives[:3]))
+            st.write(f"**Build this:** {week.practical_task}")
+            with st.expander("Questions to practice"):
+                for number, question in enumerate(week.interview_questions[:3], 1):
+                    st.write(f"{number}. {question}")
 
 
 def render_career_match():
@@ -87,13 +90,13 @@ def render_career_match():
     )
     resume_upload = st.file_uploader(
         "Your résumé",
-        type=["txt", "md", "pdf"],
+        type=["txt", "md", "pdf", "docx"],
         key="career_resume",
-        help="Accepted formats: TXT, Markdown, and PDF.",
+        help="Accepted formats: Word (.docx), PDF, TXT, and Markdown.",
     )
     job_uploads = st.file_uploader(
         "Job posting(s) - up to 3",
-        type=["txt", "md", "pdf"],
+        type=["txt", "md", "pdf", "docx"],
         accept_multiple_files=True,
         key="career_job_uploads",
     )
@@ -239,7 +242,7 @@ def render_career_match():
                 with st.spinner("Building a prioritized learning plan..."):
                     engine = CareerIntelligence()
                     plans[plan_key] = engine.generate_learning_plan(
-                        candidate, job, match["missing_skills"]
+                        candidate, job, match["missing_skills"][:6]
                     )
                 record_event(
                     PipelineRunRecord(
@@ -340,11 +343,10 @@ def render_interview_lab():
     st.subheader(f"{question.question_type} — {question.difficulty}")
     st.write(question.question)
     if question.context:
-        st.caption(question.context)
+        st.caption(f"Why this fits the role: {question.context}")
 
     with st.expander("What a strong answer should cover"):
-        for criterion in question.evaluation_criteria:
-            st.write(f"- {criterion}")
+        st.write("  •  ".join(question.evaluation_criteria[:5]))
 
     answer = st.text_area(
         "Your practice answer",
@@ -427,12 +429,10 @@ def render_interview_lab():
         feedback_col1, feedback_col2 = st.columns(2)
         with feedback_col1:
             st.write("**Strengths**")
-            for strength in feedback.strengths:
-                st.write(f"- {strength}")
+            st.write("  •  ".join(feedback.strengths[:3]))
         with feedback_col2:
             st.write("**Improve next**")
-            for improvement in feedback.improvements:
-                st.write(f"- {improvement}")
+            st.write("  •  ".join(feedback.improvements[:3]))
 
         with st.expander("Model answer and follow-up"):
             st.write(feedback.model_answer)

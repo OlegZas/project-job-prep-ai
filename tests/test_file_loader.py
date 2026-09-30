@@ -1,6 +1,8 @@
+import io
 from pathlib import Path
 
 import pytest
+from docx import Document
 
 from src.file_loader import DocumentProcessor
 
@@ -28,6 +30,38 @@ def test_read_text_falls_back_to_latin_1():
     result = processor.read_text("café".encode("latin-1"))
 
     assert result == "café"
+
+
+def test_read_docx_includes_paragraphs_and_table_cells():
+    document = Document()
+    document.add_paragraph("Python and SQL pipeline experience")
+    table = document.add_table(rows=1, cols=2)
+    table.cell(0, 0).text = "Platform"
+    table.cell(0, 1).text = "BigQuery"
+    stream = io.BytesIO()
+    document.save(stream)
+
+    result = DocumentProcessor().read_file(
+        UploadedFileStub("resume.docx", stream.getvalue())
+    )
+
+    assert "Python and SQL pipeline experience" in result
+    assert "Platform | BigQuery" in result
+
+
+def test_docx_is_supported_for_indexing():
+    document = Document()
+    document.add_paragraph("Built reliable Airflow pipelines in Python.")
+    stream = io.BytesIO()
+    document.save(stream)
+
+    result = DocumentProcessor().process_files_with_metadata(
+        [UploadedFileStub("resume.docx", stream.getvalue())]
+    )
+
+    assert result["documents"][0]["status"] == "indexed"
+    assert result["documents"][0]["file_type"] == "DOCX"
+    assert len(result["chunks"]) == 1
 
 
 @pytest.mark.parametrize(

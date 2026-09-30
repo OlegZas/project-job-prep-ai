@@ -36,25 +36,25 @@ class JobProfile(BaseModel):
 
 class LearningWeek(BaseModel):
     week_number: int = Field(ge=1, le=4)
-    focus_skills: list[str]
-    objectives: list[str]
-    practical_task: str
-    interview_questions: list[str]
+    focus_skills: list[str] = Field(min_length=1, max_length=3)
+    objectives: list[str] = Field(min_length=1, max_length=3)
+    practical_task: str = Field(max_length=320)
+    interview_questions: list[str] = Field(min_length=1, max_length=3)
 
 
 class LearningPlan(BaseModel):
     target_role: str
-    strategy: str
+    strategy: str = Field(max_length=420)
     weeks: list[LearningWeek] = Field(min_length=4, max_length=4)
-    success_metric: str
+    success_metric: str = Field(max_length=280)
 
 
 class InterviewQuestion(BaseModel):
     question_type: Literal["SQL", "Python", "Data Modeling", "System Design", "Behavioral"]
     difficulty: Literal["Foundational", "Intermediate", "Advanced"]
-    question: str
-    context: str
-    evaluation_criteria: list[str]
+    question: str = Field(max_length=520)
+    context: str = Field(max_length=300)
+    evaluation_criteria: list[str] = Field(min_length=1, max_length=5)
 
 
 class InterviewFeedback(BaseModel):
@@ -63,7 +63,7 @@ class InterviewFeedback(BaseModel):
     clarity: int = Field(ge=0, le=25)
     tradeoff_reasoning: int = Field(ge=0, le=25)
     production_readiness: int = Field(ge=0, le=25)
-    strengths: list[str]
-    improvements: list[str]
-    model_answer: str
-    follow_up_question: str
+    strengths: list[str] = Field(max_length=3)
+    improvements: list[str] = Field(max_length=3)
+    model_answer: str = Field(max_length=1600)
+    follow_up_question: str = Field(max_length=300)

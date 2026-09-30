@@ -76,9 +76,9 @@ with tab1:
 
     uploaded_files = st.file_uploader(
         "Upload your résumé, job posting, or notes",
-        type=["txt", "md", "pdf"],
+        type=["txt", "md", "pdf", "docx"],
         accept_multiple_files=True,
-        help="Accepted formats: TXT, Markdown, and PDF. Your files stay in this browser session on the public app.",
+        help="Accepted formats: Word (.docx), PDF, TXT, and Markdown. Your files stay in this browser session on the public app.",
     )
 
     if st.button("Start over with documents", help="Use this after replacing documents or if you want to start fresh."):
@@ -386,7 +386,7 @@ with tab4:
     )
     render_example_questions(
         [
-            "Which data engineering skills are employers requesting now?",
+            "How is AI affecting data engineering careers and job searches?",
             "What should I know about modern ETL tools?",
             "Which cloud skills are useful for interviews?",
         ]
@@ -394,7 +394,7 @@ with tab4:
 
     market_question = st.text_input(
         "What current topic would you like to explore?",
-        placeholder="Example: What skills are most important for data engineers in 2026?"
+        placeholder="Example: How is AI affecting data engineering careers and job searches?"
     )
 
     if st.button("Search current information", type="primary"):

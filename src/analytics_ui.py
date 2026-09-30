@@ -44,8 +44,10 @@ def _render_retrieval_quality():
     col4.metric("Cached speedup", f"{report['warm_speedup']:.1f}×")
     st.caption(
         f"Tested with {cold['case_count']} prepared questions across "
-        f"{report['chunk_count']} document sections. A technical report is available "
-        "in the GitHub repository."
+        f"{report['chunk_count']} document sections. 'Useful source found' shows how "
+        "often the correct source appeared. A source-rank score closer to 1 means it "
+        "appeared nearer the top. Cached speedup compares repeated searches with the "
+        "first run."
     )
 
 
@@ -59,28 +61,41 @@ def render_engineering_metrics():
 
     events = session_events()
     summary = summarize_session(events)
+    average_duration = summary["average_duration_ms"]
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Actions this session", summary["operation_count"])
+    col1.metric(
+        "Actions this session",
+        summary["operation_count"],
+        help="Searches, answers, comparisons, plans, and interview actions recorded in this browser session.",
+    )
     col2.metric(
         "Success rate",
         f"{summary['success_rate']:.1f}%" if summary["success_rate"] is not None else "—",
+        help="The share of recorded actions that completed successfully.",
     )
     col3.metric(
         "Average response time",
-        f"{summary['average_duration_ms']:.0f} ms"
-        if summary["average_duration_ms"] is not None
+        f"{average_duration / 1000:.1f} s"
+        if average_duration is not None
         else "—",
+        help="The average time taken by recorded operations. Lower is generally better.",
     )
     col4.metric(
         "Reused work",
         f"{summary['cache_hit_percent']:.1f}%"
         if summary["cache_hit_percent"] is not None
         else "—",
+        help="How often cached document-search work was reused instead of created again.",
+    )
+    st.caption(
+        "These are engineering health indicators, not a score for the user. They help "
+        "show whether the app is reliable, responsive, and avoiding repeated work."
     )
 
     rows = _pipeline_rows(events)
     if rows:
         st.write("### Recent application actions")
+        st.caption("A technical log of what ran, how long it took, and whether it succeeded.")
         st.dataframe(rows, width="stretch", hide_index=True)
     else:
         st.info("Use another tab first. Your application activity will appear here.")
@@ -90,6 +105,10 @@ def render_engineering_metrics():
         interview1.metric("Interview attempts", summary["interview_attempts"])
         interview2.metric(
             "Average interview score", f"{summary['average_interview_score']:.1f}/100"
+        )
+        st.caption(
+            "Interview scores summarize practice attempts from this session. A very low "
+            "score usually means the submitted answer was empty or missing key detail."
         )
 
     st.download_button(

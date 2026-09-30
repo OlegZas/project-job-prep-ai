@@ -14,6 +14,7 @@ from src.skill_taxonomy import category_for_skill, normalize_skill_name
 
 class CareerIntelligence:
     max_document_characters = 30_000
+    extraction_version = "v2-atomic-skills"
 
     def __init__(self, client=None):
         self.client = client or create_openai_client()
@@ -38,9 +39,12 @@ class CareerIntelligence:
         profile = self._parse(
             CandidateProfile,
             (
-                "Extract a data engineering candidate profile. Use only explicit "
-                "document evidence. Do not infer sensitive traits or unsupported skills. "
-                "Evidence items must be short verbatim excerpts."
+                "Extract a data engineering candidate profile using plain, atomic skill "
+                "names such as Python, SQL, BigQuery, Data Modeling, Communication, or "
+                "Production Data Engineering. Split combined tool lists into separate "
+                "skills. Include broader capabilities only when the résumé explicitly "
+                "supports them through work or project evidence. Use only document "
+                "evidence, never infer sensitive traits, and keep evidence excerpts short."
             ),
             f"Source: {source_name}\n\n{text[:self.max_document_characters]}",
         )
@@ -55,9 +59,13 @@ class CareerIntelligence:
         profile = self._parse(
             JobProfile,
             (
-                "Extract a data engineering job profile. Separate required and preferred "
-                "skills only when the document supports that distinction. Evidence items "
-                "must be short verbatim excerpts."
+                "Extract a data engineering job profile with concise, matchable skills. "
+                "Do not use full requirement sentences as skill names. Split lists into "
+                "atomic skills when every item is required. When a job asks for at least "
+                "one option, such as one cloud platform or one programming language, keep "
+                "it as one broader requirement and preserve the alternatives in evidence. "
+                "Separate required and preferred only when supported by the document. "
+                "Keep evidence excerpts short and verbatim."
             ),
             f"Source: {source_name}\n\n{text[:self.max_document_characters]}",
         )
@@ -79,8 +87,12 @@ class CareerIntelligence:
         return self._parse(
             LearningPlan,
             (
-                "Create a realistic four-week data engineering interview study plan. "
-                "Prioritize missing required skills, hands-on evidence, and measurable outcomes."
+                "Create a simple, realistic four-week interview plan. Prioritize at most "
+                "six important gaps and build on the candidate's existing strengths. Use "
+                "one short strategy paragraph and one short success metric. For each week, "
+                "return no more than three focus skills, two or three objectives of at most "
+                "15 words each, one practical task of at most two sentences, and two or "
+                "three concise interview questions. Avoid long lists and repeated advice."
             ),
             json.dumps(payload),
         )
@@ -95,6 +107,7 @@ class CareerIntelligence:
         payload = {
             "candidate_headline": candidate.headline,
             "candidate_skills": [skill.name for skill in candidate.skills],
+            "candidate_achievements": candidate.achievements[:6],
             "job": job.model_dump(mode="json"),
             "question_type": question_type,
             "difficulty": difficulty,
@@ -102,8 +115,11 @@ class CareerIntelligence:
         return self._parse(
             InterviewQuestion,
             (
-                "Create one role-specific data engineering interview question. "
-                "Do not reveal the answer. Return concrete evaluation criteria."
+                "Create one personalized data engineering interview question using the "
+                "target job, its responsibilities, and the candidate's demonstrated skills. "
+                "Keep the question to one or two sentences and do not list every technology. "
+                "Use a short context explaining why it fits this candidate and role. Return "
+                "three to five concrete criteria, each under 15 words. Do not reveal the answer."
             ),
             json.dumps(payload),
         )
@@ -118,9 +134,10 @@ class CareerIntelligence:
         feedback = self._parse(
             InterviewFeedback,
             (
-                "Score the interview answer against the supplied criteria. Be rigorous, "
-                "specific, and constructive. The four rubric subscores must align with "
-                "the overall score."
+                "Score the answer against the supplied criteria. Be fair, specific, and "
+                "easy to understand. Give at most three short strengths and three short "
+                "improvements. Keep the model answer concise and practical. The four rubric "
+                "subscores must align with the overall score."
             ),
             json.dumps(payload),
         )
