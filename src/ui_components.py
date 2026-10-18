@@ -1,3 +1,4 @@
+import base64
 from pathlib import Path
 
 import streamlit as st
@@ -95,6 +96,10 @@ h1, h2, h3, [data-testid="stHeadingWithActionElements"] {
 [data-testid="stImage"] img {border-radius:1.65rem; min-height:370px; object-fit:cover; box-shadow:var(--dp-shadow); border:1px solid rgba(255,255,255,.8); transition:transform .45s ease, box-shadow .45s ease;}
 [data-testid="stImage"] img:hover {transform:translateY(-4px) scale(1.008); box-shadow:0 28px 65px rgba(26,33,75,.18);}
 [data-testid="stImageCaption"] {font-size:.76rem; color:#68708f; padding:.3rem .35rem 0;}
+.dp-hero-visual {margin:0; animation:dp-image-in .85s .1s cubic-bezier(.2,.75,.25,1) both;}
+.dp-hero-visual img {display:block; width:100%; min-height:370px; object-fit:cover; border-radius:1.65rem; box-shadow:var(--dp-shadow); border:1px solid rgba(255,255,255,.8); transition:transform .45s ease, box-shadow .45s ease;}
+.dp-hero-visual img:hover {transform:translateY(-4px) scale(1.008); box-shadow:0 28px 65px rgba(26,33,75,.18);}
+.dp-hero-visual figcaption {font-size:.76rem; color:#68708f; padding:.55rem .35rem 0;}
 
 .dp-section-intro {padding: 1.15rem 1.25rem; border: 1px solid rgba(65,88,208,.18); border-left: 5px solid var(--dp-cyan); border-radius: 1rem; background:linear-gradient(120deg, rgba(255,255,255,.94), rgba(239,243,255,.94)); margin: .4rem 0 1.15rem; box-shadow:0 10px 30px rgba(30,41,87,.06);}
 .dp-section-intro h3 {margin:0 0 .25rem; font-size:1.05rem; color:var(--dp-navy);}
@@ -140,6 +145,7 @@ div.stButton > button[kind="primary"]:hover {background:linear-gradient(115deg,#
   .dp-hero-copy {min-height:auto; padding:1.8rem; border-radius:1.25rem;}
   .dp-hero-copy h1 {font-size:2.5rem;}
   [data-testid="stImage"] img {min-height:260px; border-radius:1.25rem;}
+  .dp-hero-visual img {min-height:260px; border-radius:1.25rem;}
   [data-testid="stTabs"] {padding:.45rem .65rem 1rem; border-radius:1rem;}
   .dp-step-grid {grid-template-columns:1fr;}
   .dp-process {grid-template-columns:1fr 1fr;}
@@ -157,6 +163,7 @@ def apply_app_style():
 
 
 def render_hero():
+    hero_data = base64.b64encode(HERO_IMAGE.read_bytes()).decode("ascii")
     copy_column, image_column = st.columns([1.02, 0.98], gap="medium", vertical_alignment="center")
     with copy_column:
         st.markdown(
@@ -172,10 +179,14 @@ def render_hero():
             unsafe_allow_html=True,
         )
     with image_column:
-        st.image(
-            HERO_IMAGE.read_bytes(),
-            caption="Prepare for technical interviews with a clear, evidence-based plan.",
-            width="stretch",
+        st.markdown(
+            f"""
+            <figure class="dp-hero-visual">
+              <img src="data:image/webp;base64,{hero_data}" alt="A data engineering candidate preparing for an interview with DataPrep AI">
+              <figcaption>Prepare for technical interviews with a clear, evidence-based plan.</figcaption>
+            </figure>
+            """,
+            unsafe_allow_html=True,
         )
 
 
