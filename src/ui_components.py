@@ -4,7 +4,7 @@ import streamlit as st
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-HERO_IMAGE = PROJECT_ROOT / "assets" / "dataprep-career-hero.png"
+HERO_IMAGE = PROJECT_ROOT / "assets" / "dataprep-career-hero.webp"
 
 
 APP_CSS = """
@@ -173,7 +173,7 @@ def render_hero():
         )
     with image_column:
         st.image(
-            str(HERO_IMAGE),
+            HERO_IMAGE.read_bytes(),
             caption="Prepare for technical interviews with a clear, evidence-based plan.",
             width="stretch",
         )

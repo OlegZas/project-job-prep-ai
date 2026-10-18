@@ -1,205 +1,73 @@
 # DataPrep AI
 
-[Live Streamlit demo](https://olegzas-pro.streamlit.app/)
+**Data engineering interview preparation with evidence from your own documents.**
 
-DataPrep AI is a data engineering career intelligence platform. It combines
-retrieval-augmented generation (RAG), validated AI extraction, deterministic skill
-matching, and interview coaching in one Python web application.
+[Open the live app](https://jobprep-oz.streamlit.app/)
 
-The project began as a class RAG assignment and is being developed into a master's
-application and data engineering portfolio project. Its product goal is simple: help
-data engineers turn their own résumé, target roles, and study material into a focused
-preparation plan.
+![DataPrep AI landing page](assets/dataprep-career-hero.webp)
 
 ## What it does
 
-### Ask My Documents
+DataPrep AI helps data engineering candidates prepare for job applications and interviews.
 
-- Reads Word (.docx), PDF, TXT, and Markdown documents.
-- Cleans, chunks, hashes, and deduplicates content.
-- Reuses embeddings inside the private browser session.
-- Ranks chunks with normalized cosine similarity and a configurable threshold.
-- Produces answers with visible `[S1]`, `[S2]` source citations and chat history.
-- Reports document status, cache behavior, chunk counts, and latency.
+- Ask questions about a résumé, job posting, or study notes and review the supporting passages.
+- Compare a résumé with a job and see which skills are supported by evidence.
+- Find important skill gaps and generate a focused four-week learning plan.
+- Practice role-specific interview questions and receive structured feedback.
+- Ask current questions about data engineering tools, skills, and hiring trends.
+- Review application speed, retrieval quality, and privacy-safe operational metrics.
 
-### Resume & Job Match
+The application accepts Word, PDF, TXT, and Markdown files.
 
-- Extracts schema-validated candidate and job profiles with the OpenAI Responses API.
-- Normalizes atomic skills through a controlled data engineering taxonomy and matches
-  named alternatives and broader capability requirements to résumé evidence.
-- Calculates a transparent match score: required skills receive weight 2 and
-  preferred skills receive weight 1.
-- Shows résumé and job evidence for every match or gap.
-- Generates a prioritized four-week learning plan.
-- Includes synthetic sample documents so the public demo does not require personal data.
+## How it works
 
-### Practice Interview
+The document assistant uses retrieval-augmented generation (RAG):
 
-- Creates SQL, Python, data modeling, system design, and behavioral questions.
-- Targets the selected role and supports three difficulty levels.
-- Scores answers on technical accuracy, clarity, tradeoff reasoning, and production
-  readiness using a deterministic 100-point total.
-- Keeps progress in the browser session and exports it as JSON.
+1. Files are read, cleaned, checked for duplicates, and divided into smaller sections.
+2. OpenAI embeddings convert the sections and the user's question into numeric representations.
+3. The most relevant sections are selected with cosine similarity.
+4. The language model answers from that evidence and displays the sources.
 
-### Current Trends
+The résumé and job comparison uses structured AI extraction followed by deterministic Python rules. Required skills receive more weight than preferred skills, and a match must include résumé evidence.
 
-- Uses OpenAI web search for current data engineering tools, skills, and trends.
+## Technology
 
-### Project Metrics
+- Python and Streamlit
+- OpenAI Responses API, embeddings, and web search
+- Pydantic and NumPy
+- PyPDF and python-docx
+- DuckDB, SQL, JSONL, and Parquet
 
-- Captures privacy-safe application operations in the active browser session.
-- Supports persistent local ingestion into raw date-partitioned JSONL.
-- Uses DuckDB SQL staging views and analytical marts.
-- Exports date-partitioned Parquet datasets for pipeline, interview, and retrieval metrics.
-- Runs data-quality checks for uniqueness, valid event types, timing, and score bounds.
-- Displays live session metrics and the recorded retrieval benchmark.
-
-## Architecture
-
-```mermaid
-flowchart LR
-    A["Résumé, job descriptions, notes"] --> B["Parse, clean, hash, deduplicate"]
-    B --> C["Chunk and embed"]
-    C --> D["Cosine search + threshold"]
-    D --> E["Cited RAG answers"]
-    B --> F["Validated profile extraction"]
-    F --> G["Taxonomy normalization"]
-    G --> H["Deterministic skill match"]
-    H --> I["Learning plan + Interview Lab"]
-    E --> J["Privacy-safe operational events"]
-    I --> J
-    J --> K["Raw partitioned JSONL"]
-    K --> L["DuckDB staging + SQL marts"]
-    L --> M["Partitioned Parquet + metrics dashboard"]
-```
-
-See [the architecture notes](docs/ARCHITECTURE.md) and
-[the V2 roadmap](docs/V2_ROADMAP.md) for design decisions and remaining work.
-
-## Tech stack
-
-- Python 3.13 and Streamlit
-- OpenAI Responses API, structured outputs, embeddings, and web search
-- Pydantic data contracts and NumPy retrieval
-- PyPDF and python-docx document ingestion
-- DuckDB, SQL, JSONL, and Parquet analytics
-- Pytest and Streamlit AppTest
-- GitHub Actions
-- Docker
-
-## Local setup
-
-From PowerShell in the repository root:
+## Run locally
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 Copy-Item .env.example .env
-```
-
-Add your API key to `.env`; never commit that file. The model defaults in
-`.env.example` can be changed without editing Python.
-
-Run the app:
-
-```powershell
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-Expected result: five tabs named **Ask My Documents**, **Resume & Job Match**,
-**Practice Interview**, **Current Trends**, and **Project Metrics**. In Resume & Job
-Match, leave the safe sample option selected and click **Compare résumé and job** for
-the quickest demo.
+Add your OpenAI API key to `.env` before starting the application:
 
-## Local analytics pipeline
+```text
+OPENAI_API_KEY=your-key-here
+```
 
-The public Streamlit deployment uses session analytics because its local filesystem is
-temporary. To enable persistent analytics on your computer, set this in `.env`:
+Never commit `.env` or an API key.
+
+## Local analytics
+
+The public app keeps operational metrics only for the current browser session. Local mode can write privacy-safe events to JSONL, load them into DuckDB, build SQL analytical tables, and export partitioned Parquet files.
+
+To enable it, add this to `.env`:
 
 ```text
 DATAPREP_ANALYTICS_MODE=local
 DATAPREP_ANALYTICS_DIR=data/analytics
 ```
 
-Restart the app, use its features, then open **Project Metrics** and click
-**Update the local analytics database**. The application creates:
+Résumé text, uploaded documents, questions, answers, names, and API keys are excluded from analytics events.
 
-```text
-data/analytics/
-├── raw/events/event_date=YYYY-MM-DD/events.jsonl
-├── dataprep.duckdb
-└── parquet/
-    ├── pipeline_daily/event_date=YYYY-MM-DD/data.parquet
-    ├── interview_progress/event_date=YYYY-MM-DD/data.parquet
-    └── retrieval_quality/event_date=YYYY-MM-DD/data.parquet
-```
+## AI-assisted development
 
-Build a complete synthetic pipeline without calling OpenAI:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\build_analytics_demo.py
-```
-
-See [the local analytics guide](docs/LOCAL_ANALYTICS.md) for tables, quality checks,
-queries, and privacy boundaries.
-
-## Docker
-
-Build and run the same application in a container:
-
-```powershell
-docker build -t dataprep-ai .
-docker run --rm -p 8501:8501 --env-file .env dataprep-ai
-```
-
-Open `http://localhost:8501`. The container defaults to session analytics. Mount a
-local directory and set `DATAPREP_ANALYTICS_MODE=local` if you want persistent
-container output.
-
-## Quality checks
-
-Run the offline automated suite (no API spending):
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest
-```
-
-Run the retrieval benchmark (small embeddings API cost):
-
-```powershell
-.\.venv\Scripts\python.exe scripts\evaluate_retrieval.py --top-k 4 --min-score 0.25 --output evals\retrieval_quality.json
-```
-
-The current ten-case benchmark reports `Hit@4 = 1.00` and `MRR = 0.883`.
-Its measured warm pass took 0.048 seconds with zero API calls, compared with
-16.096 seconds for the cold pass—a 335× speedup in that run. GitHub Actions runs
-the offline test suite, analytics pipeline, source compilation, and Docker build for
-every push and pull request.
-
-## Privacy and cost controls
-
-- Uploaded content, embeddings, extracted profiles, and interview history remain in
-  the current Streamlit browser session.
-- The user can clear the document index and download interview history.
-- Analytics contracts intentionally exclude document text, file names, answers, and
-  API keys.
-- Public analytics are held in the current Streamlit session. Persistent DuckDB and
-  Parquet output is opt-in for local runs.
-- `.env`, Streamlit secrets, caches, and virtual environments are ignored by Git.
-- OpenAI requests have a configurable 60-second timeout and one retry so failures do
-  not leave the interactive app waiting indefinitely.
-- Public OpenAI usage should be monitored before broadly sharing the interactive URL.
-
-## Example demo flow
-
-1. Introduce the product, stack, and responsible use of an AI coding assistant.
-2. Give a brief landing-page overview and explain the five tabs.
-3. Upload Word, PDF, or TXT documents in Ask My Documents and show a cited answer.
-4. Compare a résumé with a job, explain structured extraction and deterministic
-   matching, and generate the concise four-week plan.
-5. Generate a personalized Practice Interview question and show feedback.
-6. Ask Current Trends how AI is affecting data engineering careers and job searches.
-7. Explain the session metrics, retrieval benchmark, privacy boundaries, and local
-   DuckDB and Parquet pipeline.
-
-The complete recording outline is in [the demo script](docs/DEMO_SCRIPT.md).
+AI coding assistants were used for brainstorming, initial code generation, debugging, and interface iteration. I reviewed the changes and remained responsible for the requirements, architecture, testing, and final implementation decisions.

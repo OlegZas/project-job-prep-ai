@@ -10,3 +10,15 @@ Thumbs.db
 data/analytics/
 *.duckdb
 *.duckdb.wal
+
+# Local Codex and generated working files
+.artifact-work/
+.codex-work/
+tmp/
+output/
+outputs/
+tools/
+
+# Personal documents and exported guides kept locally
+/*.docx
+/*.pdf
